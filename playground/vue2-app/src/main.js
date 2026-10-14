@@ -1,0 +1,10 @@
+import Vue from 'vue';
+import ElementUI from 'element-ui';
+import 'element-ui/lib/theme-chalk/index.css';
+import '@vue-ppt-kit/theme';
+import PptKit, { PptStage } from '@vue-ppt-kit/vue2';
+import App from './App.vue';
+Vue.use(ElementUI);
+Vue.use(PptKit);
+Vue.component('PptStage', PptStage);
+new Vue({ render: h => h(App) }).$mount('#app');

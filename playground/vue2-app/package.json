@@ -1,0 +1,7 @@
+{
+  "name": "playground-vue2-app",
+  "private": true,
+  "scripts": { "serve": "vue-cli-service serve" },
+  "dependencies": { "@vue-ppt-kit/vue2": "workspace:*", "@vue-ppt-kit/theme": "workspace:*", "@vue/composition-api": "^1.7.2", "element-ui": "^2.15.14", "vue": "2.6.14" },
+  "devDependencies": { "@vue/cli-service": "~5.0.8", "vue-template-compiler": "2.6.14", "typescript": "~5.5.4" }
+}
