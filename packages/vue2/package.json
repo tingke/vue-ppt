@@ -1,0 +1,35 @@
+{
+  "name": "@vue-ppt-kit/vue2",
+  "version": "0.1.0",
+  "main": "./dist/vue-ppt-kit-vue2.common.js",
+  "module": "./dist/vue-ppt-kit-vue2.common.js",
+  "types": "./types/index.d.ts",
+  "files": [
+    "dist",
+    "types"
+  ],
+  "scripts": {
+    "build": "vue-cli-service build --target lib --name vue-ppt-kit-vue2 src/index.ts"
+  },
+  "peerDependencies": {
+    "@vue/composition-api": "^1.7.2",
+    "element-ui": "^2.15.14",
+    "vue": "^2.6.14"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.7",
+    "@vue/cli-plugin-typescript": "~5.0.8",
+    "@vue/cli-service": "~5.0.8",
+    "@vue/composition-api": "^1.7.2",
+    "babel-loader": "^10.1.1",
+    "element-ui": "^2.15.14",
+    "typescript": "~5.5.4",
+    "vue": "2.6.14",
+    "vue-template-compiler": "2.6.14"
+  },
+  "dependencies": {
+    "@vue-ppt-kit/core": "workspace:*",
+    "@vue-ppt-kit/theme": "workspace:*",
+    "vuedraggable": "2.24.3"
+  }
+}
