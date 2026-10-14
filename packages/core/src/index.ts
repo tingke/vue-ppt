@@ -10,7 +10,7 @@ export interface PptSlideModel {
   elements: PptElementModel[];
 }
 
-export type PptElementModel = PptTextElement | PptImageElement | PptShapeElement;
+export type PptElementModel = PptTextElement | PptImageElement | PptShapeElement | PptTableElement;
 
 export interface PptBaseElement {
   id: string;
@@ -39,6 +39,26 @@ export interface PptShapeElement extends PptBaseElement {
   shape: 'rect' | 'ellipse' | 'line';
   fill?: string;
   stroke?: string;
+}
+
+export interface PptTableCell {
+  id: string;
+  text: string;
+  colspan?: number;
+  rowspan?: number;
+}
+
+export interface PptTableElement extends PptBaseElement {
+  type: 'table';
+  /** 行列数据，data[row][col] */
+  data: PptTableCell[][];
+  /** 每列宽度占比（总和为 1），缺省时均分 */
+  colWidths?: number[];
+  outlineColor?: string;
+  headerFill?: string;
+  headerColor?: string;
+  fontSize?: number;
+  color?: string;
 }
 
 /** Placeholder API. A real implementation must unzip and parse OOXML relationships. */

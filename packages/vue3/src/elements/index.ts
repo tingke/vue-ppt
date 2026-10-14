@@ -4,9 +4,11 @@ import type { Component } from 'vue';
 import TextElement from './TextElement.vue';
 import ImageElement from './ImageElement.vue';
 import ShapeElement from './ShapeElement.vue';
+import TableElement from './TableElement.vue';
 
 export const elementComponentMap: Record<string, Component> = {
   text: TextElement,
   image: ImageElement,
   shape: ShapeElement,
+  table: TableElement,
 };
