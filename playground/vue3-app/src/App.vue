@@ -1,7 +1,7 @@
 <template>
   <main class="app">
     <h1>Vue PPT Kit</h1>
-    <p>Vue 3 + Element Plus Playground — 左侧缩略图（点击切换 / 添加 / 复制 / 删除 / 拖拽排序）</p>
+    <p>Vue 3 + Element Plus Playground — 顶部工具栏（插入文字 / 插入图片 / 插入表格）+ 左侧缩略图</p>
     <PptEditor class="stage" :document="doc" />
   </main>
 </template>

@@ -1,14 +1,16 @@
 <template>
   <div class="vpk-editor">
-    <SlideThumbnails
-      :doc="state.doc"
-      :slide-index="state.slideIndex"
-      @select="(i) => (state.slideIndex.value = i)"
-      @create="state.createSlide()"
-      @copy="(i) => state.copySlide(i)"
-      @remove="(i) => state.deleteSlide(i)"
-      @move="(from, to) => state.moveSlide(from, to)"
-    />
+    <Toolbar :doc="state.doc" @insert="state.addElement" />
+    <div class="vpk-main">
+      <SlideThumbnails
+        :doc="state.doc"
+        :slide-index="state.slideIndex"
+        @select="(i) => (state.slideIndex.value = i)"
+        @create="state.createSlide()"
+        @copy="(i) => state.copySlide(i)"
+        @remove="(i) => state.deleteSlide(i)"
+        @move="(from, to) => state.moveSlide(from, to)"
+      />
     <div
       ref="canvasRef"
       class="vpk-editor-canvas"
@@ -30,6 +32,15 @@
           :width="state.doc.width"
           :height="state.doc.height"
           :scale="1"
+          :canvas-scale="canvasScale"
+          :selected-id="state.selectedElementId.value"
+          :editing-id="state.editingElementId.value"
+          @select="onSelectElement"
+          @drag-move="onElementDragMove"
+          @resize-move="onElementResizeMove"
+          @edit-text="onEditText"
+          @update-text="onUpdateText"
+          @input-text="onInputText"
         />
       </div>
 
@@ -39,17 +50,19 @@
         <span class="vpk-zoom-text" title="点击重置 (Ctrl + 0)" @click="resetCanvas">{{ canvasScalePercentage }}</span>
         <span class="vpk-zoom-btn" title="放大 (Ctrl + +)" @click="scaleCanvas('+')">+</span>
       </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, type PropType } from 'vue';
-import type { PptDocumentModel } from '@vue-ppt-kit/core';
+import type { PptDocumentModel, PptElementModel } from '@vue-ppt-kit/core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
 import SlideThumbnails from './SlideThumbnails.vue';
 import SlideCanvas from './SlideCanvas.vue';
+import Toolbar from './Toolbar.vue';
 
 const props = defineProps({
   document: { type: Object as PropType<PptDocumentModel>, default: undefined },
@@ -73,17 +86,67 @@ const {
 
 // 文档尺寸变化时重新计算视口
 watch([docWidth, docHeight], () => setViewportPosition());
+
+// 切换页面时清除选中 / 编辑态
+watch(
+  () => state.slideIndex.value,
+  () => {
+    state.selectedElementId.value = '';
+    state.editingElementId.value = '';
+  }
+);
+
+// ==================== 元素交互事件（坐标换算已在 SlideCanvas 内完成） ====================
+
+function onSelectElement(el: PptElementModel | null) {
+  state.selectedElementId.value = el ? el.id : '';
+  if (!el) state.editingElementId.value = '';
+}
+
+function onElementDragMove(payload: { id: string; x: number; y: number }) {
+  state.updateElement(payload.id, { x: payload.x, y: payload.y });
+}
+
+function onElementResizeMove(payload: { id: string; x: number; y: number; width: number; height: number }) {
+  state.updateElement(payload.id, payload);
+}
+
+function onEditText(el: PptElementModel) {
+  state.selectedElementId.value = el.id;
+  state.editingElementId.value = el.id;
+}
+
+function onUpdateText(payload: { id: string; text: string; height: number }) {
+  if (!payload.text.trim()) {
+    // 空文本：删除元素（参考 PPTist checkEmptyText）
+    state.removeElement(payload.id);
+  } else {
+    state.updateElement(payload.id, { text: payload.text, height: payload.height });
+  }
+  state.editingElementId.value = '';
+}
+
+// 编辑过程中实时写回内容与高度，保证画布显示与输入同步
+function onInputText(payload: { id: string; text: string; height: number }) {
+  state.updateElement(payload.id, { text: payload.text, height: payload.height });
+}
 </script>
 
 <style scoped>
 .vpk-editor {
   display: flex;
+  flex-direction: column;
   height: 560px;
   min-height: 320px;
   background: var(--vpk-stage-bg, #f5f7fa);
   border: 1px solid var(--vpk-border, #ebeef5);
   box-sizing: border-box;
   overflow: hidden;
+}
+.vpk-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 .vpk-editor-canvas {
   position: relative;
