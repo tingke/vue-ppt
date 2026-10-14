@@ -1,0 +1,7 @@
+:root {
+  --vpk-stage-bg: #f5f7fa;
+  --vpk-border: #ebeef5;
+  --vpk-text: #303133;
+  --vpk-primary: #409eff;
+}
+.vpk-stage { color: var(--vpk-text); box-sizing: border-box; }

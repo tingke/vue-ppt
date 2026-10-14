@@ -1,0 +1,18 @@
+{
+  "name": "vue-ppt-kit",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:vue2": "pnpm --dir playground/vue2-app serve",
+    "dev:vue3": "pnpm --dir playground/vue3-app dev",
+    "build:core": "pnpm --filter @vue-ppt-kit/core build",
+    "build:vue2": "pnpm --filter @vue-ppt-kit/vue2 build",
+    "build:vue3": "pnpm --filter @vue-ppt-kit/vue3 build",
+    "build": "pnpm build:core && pnpm build:vue2 && pnpm build:vue3",
+    "typecheck": "pnpm --filter @vue-ppt-kit/core typecheck && pnpm --filter @vue-ppt-kit/vue3 typecheck"
+  },
+  "devDependencies": {
+    "typescript": "~5.5.4"
+  }
+}

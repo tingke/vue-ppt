@@ -1,0 +1,7 @@
+{
+  "name": "@vue-ppt-kit/theme",
+  "version": "0.1.0",
+  "type": "module",
+  "files": ["src"],
+  "exports": { ".": "./src/index.css" }
+}
