@@ -17,11 +17,14 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "devDependencies": {
+    "jsdom": "^25.0.1",
     "tsup": "^8.2.4",
-    "typescript": "~5.5.4"
+    "typescript": "~5.5.4",
+    "vitest": "^2.1.9"
   },
   "dependencies": {
     "prosemirror-commands": "^1.7.2",

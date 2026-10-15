@@ -69,9 +69,15 @@ export const richSchema = new Schema({
       toDOM: (mark: Mark) => ['span', { style: `font-family: ${mark.attrs.fontname}` }, 0],
     },
     fontsize: {
-      // 无单位数字字符串，toDOM 时补 px；parseDOM 时去掉单位，便于工具栏回显匹配
+      // 无单位数字字符串，toDOM 时补 px；parseDOM 时去掉单位，便于工具栏回显匹配。
+      // 仅接受 px / 无单位，其余单位（em/rem/%）无法保真往返，直接丢弃该声明
       attrs: { fontsize: { default: null } },
-      parseDOM: [{ style: 'font-size', getAttrs: (value: string) => ({ fontsize: String(parseFloat(value)) }) }],
+      parseDOM: [
+        {
+          style: 'font-size',
+          getAttrs: (value: string) => (/^\d+(\.\d+)?(px)?$/.test(value.trim()) ? { fontsize: String(parseFloat(value)) } : false),
+        },
+      ],
       toDOM: (mark: Mark) => ['span', { style: `font-size: ${mark.attrs.fontsize}px` }, 0],
     },
   },

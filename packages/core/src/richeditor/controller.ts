@@ -127,7 +127,10 @@ export class TextEditor {
   setContent(html: string): void {
     if (this.view.hasFocus()) return;
     const { state } = this.view;
-    this.view.dispatch(state.tr.replaceWith(0, state.doc.content.size, parseContent(html).content));
+    const newDoc = parseContent(html);
+    // 同内容短路：避免污染编辑器内撤销栈
+    if (newDoc.eq(state.doc)) return;
+    this.view.dispatch(state.tr.replaceWith(0, state.doc.content.size, newDoc.content));
   }
 
   setEditable(editable: boolean): void {
