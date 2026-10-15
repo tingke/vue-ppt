@@ -1,8 +1,5 @@
 <template>
   <div class="vpk-thumbnails" @contextmenu.prevent.stop="openMenu($event, 'blank')">
-    <div class="vpk-add-slide" @click="emit('create')">
-      <span class="vpk-add-icon">+</span>添加幻灯片
-    </div>
     <Draggable
       class="vpk-thumb-list"
       :model-value="doc.slides"
@@ -23,6 +20,8 @@
           <div class="vpk-thumb-label">{{ fillDigit(index + 1) }}</div>
           <div class="vpk-thumb" :style="thumbStyle">
             <SlideCanvas class="vpk-thumb-canvas" :slide="element" :width="doc.width" :height="doc.height" :scale="thumbScale" static />
+            <!-- 页面类型标签：卡片右下角 -->
+            <div class="vpk-thumb-type">{{ getSlideTypeLabel(element.slideType) }}</div>
           </div>
         </div>
       </template>
@@ -40,10 +39,25 @@
             v-else
             class="vpk-contextmenu-item"
             :class="{ disabled: item.disabled }"
-            @click="!item.disabled && handleMenuClick(item)"
+            @mouseenter="onItemMouseEnter(item, i)"
+            @mouseleave="closeSubMenu"
+            @click="handleItemClick(item, i)"
           >
             <span class="vpk-contextmenu-text">{{ item.text }}</span>
             <span v-if="item.subText" class="vpk-contextmenu-sub">{{ item.subText }}</span>
+            <span v-if="hasChildren(item)" class="vpk-contextmenu-arrow">›</span>
+            <!-- 二级菜单：切换类型 -->
+            <div v-if="menu.subIndex === i && hasChildren(item)" class="vpk-contextmenu vpk-contextmenu-submenu">
+              <div
+                v-for="(child, j) in item.children"
+                :key="j"
+                class="vpk-contextmenu-item"
+                @click.stop="handleMenuClick(child)"
+              >
+                <span class="vpk-contextmenu-text">{{ child.text }}</span>
+                <span v-if="child.subText" class="vpk-contextmenu-sub">{{ child.subText }}</span>
+              </div>
+            </div>
           </div>
         </template>
       </div>
@@ -54,7 +68,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive } from 'vue';
 import Draggable from 'vuedraggable';
-import type { PptDocumentModel } from '@vue-ppt-kit/core';
+import { getSlideTypeLabel, SLIDE_TYPES } from '@vue-ppt-kit/core';
+import type { PptDocumentModel, PptSlideType } from '@vue-ppt-kit/core';
 import SlideCanvas from './SlideCanvas.vue';
 
 interface MenuItem {
@@ -62,6 +77,8 @@ interface MenuItem {
   subText?: string;
   disabled?: boolean;
   handler?: (index: number) => void;
+  /** 二级菜单项（如「切换类型」的类型列表） */
+  children?: MenuItem[];
   divider?: boolean;
 }
 
@@ -76,9 +93,10 @@ const emit = defineEmits<{
   (e: 'copy', index: number): void;
   (e: 'remove', index: number): void;
   (e: 'move', from: number, to: number): void;
+  (e: 'type-change', index: number, type: PptSlideType): void;
 }>();
 
-const menu = reactive({ visible: false, x: 0, y: 0, targetIndex: -1 });
+const menu = reactive({ visible: false, x: 0, y: 0, targetIndex: -1, subIndex: -1 });
 
 function fillDigit(n: number) {
   return String(n).padStart(2, '0');
@@ -102,12 +120,29 @@ const menuItems = computed<MenuItem[]>(() => {
   }
   const index = menu.targetIndex;
   const onlyOne = props.doc.slides.length <= 1;
+  // 二级菜单：仅列出当前类型之外的另外 2 种
+  const slide = props.doc.slides[index];
+  const typeChildren: MenuItem[] = SLIDE_TYPES
+    .filter((t) => t.value !== (slide?.slideType || 'custom'))
+    .map((t) => ({ text: t.label, handler: (i: number) => emit('type-change', i, t.value) }));
   const items: MenuItem[] = [
     { text: '新建页面', subText: 'Enter', handler: () => emit('create') },
     { text: '复制页面', subText: 'Ctrl + D', handler: (i: number) => emit('copy', i) },
     { text: '删除页面', subText: 'Delete', disabled: onlyOne, handler: (i: number) => emit('remove', i) },
+    { divider: true },
+    { text: '切换类型', children: typeChildren },
   ];
-  return items.map((item) => ({ ...item, handler: item.handler ? () => item.handler!(index) : undefined })) as MenuItem[];
+  // 一级与二级菜单项均闭包绑定目标页 index
+  return items.map((item) => ({
+    ...item,
+    handler: item.handler ? () => item.handler!(index) : undefined,
+    children: item.children && item.children.length
+      ? item.children.map((child) => ({
+          ...child,
+          handler: child.handler ? () => child.handler!(index) : undefined,
+        }))
+      : undefined,
+  })) as MenuItem[];
 });
 
 function openMenu(e: MouseEvent, type: 'item' | 'blank', index = -1) {
@@ -115,10 +150,34 @@ function openMenu(e: MouseEvent, type: 'item' | 'blank', index = -1) {
   menu.x = e.clientX;
   menu.y = e.clientY;
   menu.targetIndex = type === 'item' ? index : -1;
+  menu.subIndex = -1;
 }
 
 function closeMenu() {
   menu.visible = false;
+}
+
+function hasChildren(item: MenuItem): boolean {
+  return !!(item.children && item.children.length);
+}
+
+// 悬停展开二级菜单（子菜单为条目子元素，移入不会触发 mouseleave）
+function onItemMouseEnter(item: MenuItem, i: number) {
+  menu.subIndex = hasChildren(item) ? i : -1;
+}
+
+function closeSubMenu() {
+  menu.subIndex = -1;
+}
+
+// 一级项：有子菜单仅切换展开态，否则执行并关闭菜单
+function handleItemClick(item: MenuItem, i: number) {
+  if (item.disabled) return;
+  if (hasChildren(item)) {
+    menu.subIndex = menu.subIndex === i ? -1 : i;
+    return;
+  }
+  handleMenuClick(item);
 }
 
 function handleMenuClick(item: MenuItem) {
@@ -165,18 +224,6 @@ const thumbScale = computed(() => 120 / props.doc.width);
   background: #fff;
   user-select: none;
 }
-.vpk-add-slide {
-  height: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  border-bottom: 1px solid var(--vpk-border, #ebeef5);
-  cursor: pointer;
-}
-.vpk-add-slide:hover { background: #f5f7fa; }
-.vpk-add-icon { font-size: 14px; }
 .vpk-thumb-list {
   flex: 1;
   overflow: auto;
@@ -191,6 +238,7 @@ const thumbScale = computed(() => 120 / props.doc.width);
 }
 .vpk-thumb-item.active .vpk-thumb { outline-color: var(--vpk-primary, #409eff); }
 .vpk-thumb-item.active .vpk-thumb-label { color: var(--vpk-primary, #409eff); }
+.vpk-thumb-item.active .vpk-thumb-type { background: var(--vpk-primary, #409eff); }
 .vpk-thumb-label {
   width: 20px;
   font-size: 12px;
@@ -199,9 +247,28 @@ const thumbScale = computed(() => 120 / props.doc.width);
   flex-shrink: 0;
 }
 .vpk-thumb {
+  position: relative;
   outline: 1px solid rgba(64, 158, 255, 0.15);
   overflow: hidden;
   flex-shrink: 0;
+}
+/* 页面类型角标：卡片右下角 */
+.vpk-thumb-type {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 2px 5px;
+  font-size: 10px;
+  line-height: 1.2;
+  color: #fff;
+  background: rgba(48, 49, 51, 0.65);
+  border-top-left-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }
 .vpk-thumb-canvas {
   width: 100%;
@@ -223,6 +290,7 @@ const thumbScale = computed(() => 120 / props.doc.width);
   font-size: 13px;
 }
 .vpk-contextmenu-item {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -235,5 +303,14 @@ const thumbScale = computed(() => 120 / props.doc.width);
 .vpk-contextmenu-item.disabled { color: #c0c4cc; cursor: not-allowed; }
 .vpk-contextmenu-item.disabled:hover { background: transparent; color: #c0c4cc; }
 .vpk-contextmenu-sub { font-size: 12px; color: #909399; }
+.vpk-contextmenu-arrow { font-size: 14px; line-height: 1; color: #909399; }
+/* 二级菜单：锚定在一级条目右侧（覆盖 .vpk-contextmenu 的 fixed 定位） */
+.vpk-contextmenu-submenu {
+  position: absolute;
+  left: 100%;
+  top: -5px;
+  z-index: 1;
+  min-width: 160px;
+}
 .vpk-contextmenu-divider { height: 1px; margin: 4px 0; background: #ebeef5; }
 </style>

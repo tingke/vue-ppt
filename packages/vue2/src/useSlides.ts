@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import { computed, reactive } from '@vue/composition-api';
-import { createEmptyDocument, genId, PptDocumentModel, PptElementModel } from '@vue-ppt-kit/core';
+import { createEmptyDocument, genId, PptDocumentModel, PptElementModel, PptSlideType } from '@vue-ppt-kit/core';
 
 interface SlidesState {
   doc: PptDocumentModel;
@@ -10,10 +10,11 @@ interface SlidesState {
   selectedElement: ReturnType<typeof computed>;
   editingElementId: { value: string };
   clipboard: { value: PptElementModel | null };
-  createSlide: () => void;
+  createSlide: (type?: PptSlideType) => void;
   deleteSlide: (index?: number) => void;
   copySlide: (index?: number) => void;
   moveSlide: (from: number, to: number) => void;
+  setSlideType: (index: number, type: PptSlideType) => void;
   updateElement: (id: string, props: Partial<PptElementModel>) => void;
   addElement: (element: PptElementModel) => void;
   removeElement: (id: string) => void;
@@ -50,8 +51,11 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     return slide.elements.find((e) => e.id === selectedElementId.value) || null;
   });
 
-  function createSlide() {
-    doc.slides.splice(slideIndex.value + 1, 0, { id: genId(), elements: [] });
+  function createSlide(type?: PptSlideType) {
+    const slide: PptDocumentModel['slides'][number] = { id: genId(), elements: [] };
+    // 自定义页为缺省值，不写入字段（与「缺省继承」设计一致）
+    if (type && type !== 'custom') slide.slideType = type;
+    doc.slides.splice(slideIndex.value + 1, 0, slide);
     slideIndex.value += 1;
   }
 
@@ -75,6 +79,15 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     const removed = doc.slides.splice(from, 1)[0];
     doc.slides.splice(to, 0, removed);
     slideIndex.value = to;
+  }
+
+  // 切换指定页类型（如缩略图右键快捷切换）；
+  // slideType 可能是页面对象上不存在的字段，Vue 2 响应式必须走 Vue.set / Vue.delete
+  function setSlideType(index: number, type: PptSlideType) {
+    const slide = doc.slides[index];
+    if (!slide) return;
+    if (type === 'custom') Vue.delete(slide as unknown as Record<string, unknown>, 'slideType');
+    else Vue.set(slide as unknown as Record<string, unknown>, 'slideType', type);
   }
 
   // 更新当前页内指定元素的部分属性（如拖拽后的 x/y）
@@ -180,6 +193,7 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     deleteSlide,
     copySlide,
     moveSlide,
+    setSlideType,
     updateElement,
     addElement,
     removeElement,

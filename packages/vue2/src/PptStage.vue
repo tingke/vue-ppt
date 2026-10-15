@@ -10,6 +10,7 @@
         @copy="state.copySlide"
         @remove="state.deleteSlide"
         @move="state.moveSlide"
+        @type-change="state.setSlideType"
       />
       <div
         ref="canvas"

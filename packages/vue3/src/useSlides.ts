@@ -1,5 +1,5 @@
 import { reactive, computed } from 'vue';
-import { createEmptyDocument, genId, type PptDocumentModel, type PptSlideModel, type PptElementModel } from '@vue-ppt-kit/core';
+import { createEmptyDocument, genId, type PptDocumentModel, type PptSlideModel, type PptElementModel, type PptSlideType } from '@vue-ppt-kit/core';
 
 export function useSlides(options?: { document?: PptDocumentModel }) {
   const doc = reactive<PptDocumentModel>(
@@ -23,8 +23,11 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
     return slide.elements.find((e) => e.id === selectedElementId.value) ?? null;
   });
 
-  function createSlide() {
-    doc.slides.splice(slideIndex.value + 1, 0, { id: genId(), elements: [] });
+  function createSlide(type?: PptSlideType) {
+    const slide: PptSlideModel = { id: genId(), elements: [] };
+    // 自定义页为缺省值，不写入字段（与「缺省继承」设计一致）
+    if (type && type !== 'custom') slide.slideType = type;
+    doc.slides.splice(slideIndex.value + 1, 0, slide);
     slideIndex.value += 1;
   }
 
@@ -49,6 +52,15 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
     const [s] = doc.slides.splice(from, 1);
     doc.slides.splice(to, 0, s);
     slideIndex.value = to;
+  }
+
+  // 切换指定页类型（如缩略图右键快捷切换）
+  function setSlideType(index: number, type: PptSlideType) {
+    const slide = doc.slides[index];
+    if (!slide) return;
+    // 自定义页为缺省值：直接删除字段，保持数据最小化
+    if (type === 'custom') delete slide.slideType;
+    else slide.slideType = type;
   }
 
   // 更新当前页内指定元素的部分属性（如拖拽后的 x/y）
@@ -148,6 +160,7 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
     deleteSlide,
     copySlide,
     moveSlide,
+    setSlideType,
     updateElement,
     addElement,
     removeElement,

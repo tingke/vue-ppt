@@ -247,13 +247,33 @@
 
       <!-- ==================== 插入：幻灯片 / 背景 / 组件（图标数据取 core TOOLBAR_ICONS） ==================== -->
       <div v-else class="vpk-tool-groups">
-        <!-- 幻灯片 -->
+        <!-- 幻灯片：点击弹出类型下拉（自定义页 / 特殊点位页（循环）/ 点位页（循环）） -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
-            <button type="button" class="vpk-tool-btn" title="新建幻灯片" @click="state?.createSlide()">
-              <span class="vpk-icon" v-html="ICONS.slide"></span>
-              <span>新建幻灯片</span>
-            </button>
+            <div class="vpk-tool-anchor">
+              <button
+                type="button"
+                class="vpk-tool-btn"
+                title="新建幻灯片"
+                :class="{ active: slideTypeMenuVisible }"
+                @click="toggleSlideTypeMenu($event)"
+              >
+                <span class="vpk-icon" v-html="ICONS.slide"></span>
+                <span>新建幻灯片</span>
+                <i class="vpk-caret-down" />
+              </button>
+
+              <div v-if="slideTypeMenuVisible" class="vpk-slide-type-menu" :style="slideTypePopupStyle">
+                <div
+                  v-for="t in SLIDE_TYPES"
+                  :key="t.value"
+                  class="vpk-slide-type-item"
+                  @click="onCreateSlide(t.value)"
+                >
+                  {{ t.label }}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -324,6 +344,7 @@ import {
   ORDER_OPTIONS,
   RICH_TEXT_COMMAND,
   RICH_TEXT_STATE,
+  SLIDE_TYPES,
   TOOLBAR_ICONS,
   createImageElement,
   createTextElement,
@@ -333,6 +354,7 @@ import {
   type PptDocumentModel,
   type PptElementModel,
   type PptImageElement,
+  type PptSlideType,
   type PptTextAlign,
   type PptTextElement,
   type RichTextState,
@@ -466,6 +488,7 @@ function anchorPopupStyle(e: Event, width: number): CSSProperties {
 function closePopups() {
   colorAnchor.value = null;
   closeTablePicker();
+  closeSlideTypeMenu();
 }
 const currentColor = computed(() => {
   if (colorAnchor.value === 'fill') return textEl.value?.fill || '#ffffff';
@@ -559,6 +582,21 @@ function closeTablePicker() {
   tablePickerVisible.value = false;
 }
 
+// 新建幻灯片：点击弹出类型下拉，按所选类型在当前页后新建（缺省自定义页）
+const slideTypeMenuVisible = ref(false);
+const slideTypePopupStyle = ref<CSSProperties>({});
+function toggleSlideTypeMenu(e: Event) {
+  slideTypeMenuVisible.value = !slideTypeMenuVisible.value;
+  if (slideTypeMenuVisible.value) slideTypePopupStyle.value = anchorPopupStyle(e, 170);
+}
+function closeSlideTypeMenu() {
+  slideTypeMenuVisible.value = false;
+}
+function onCreateSlide(type: PptSlideType) {
+  closeSlideTypeMenu();
+  state.value?.createSlide(type);
+}
+
 // 点击「打开中的弹层及其触发按钮」之外时收起：
 // 包括工具栏内其他区域、画布与页面任意位置（捕获阶段监听，画布元素 stopPropagation 也不影响）
 const rootRef = ref<HTMLElement>();
@@ -569,13 +607,16 @@ function onOutsideClick(e: MouseEvent) {
     ? rootRef.value?.querySelector('.vpk-table-picker')
     : colorAnchor.value
       ? rootRef.value?.querySelector('.vpk-color-popup')
-      : null;
+      : slideTypeMenuVisible.value
+        ? rootRef.value?.querySelector('.vpk-slide-type-menu')
+        : null;
   if (popup) {
     const anchor = popup.closest('.vpk-tool-anchor');
     if (anchor && anchor.contains(target)) return;
   }
   if (colorAnchor.value) colorAnchor.value = null;
   if (tablePickerVisible.value) closeTablePicker();
+  if (slideTypeMenuVisible.value) closeSlideTypeMenu();
 }
 onMounted(() => {
   emitter.on(RICH_TEXT_STATE, onRichTextState);
@@ -687,6 +728,40 @@ onBeforeUnmount(() => {
 .vpk-tool-anchor {
   position: relative;
   display: flex;
+}
+
+/* 新建幻灯片类型下拉：fixed 定位（同色板/表格弹层，避免被滚动容器裁剪） */
+.vpk-slide-type-menu {
+  position: fixed;
+  z-index: 2100;
+  min-width: 170px;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.vpk-slide-type-item {
+  padding: 6px 12px;
+  color: #303133;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vpk-slide-type-item:hover {
+  background: #f5f7fa;
+  color: var(--vpk-primary, #409eff);
+}
+
+/* 下拉箭头（纯 CSS 三角，跟随文字颜色） */
+.vpk-caret-down {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
 }
 
 /* 图标容器：SVG 字符串经 v-html 内联（不带 scoped 标记），:deep 穿透设置尺寸 */

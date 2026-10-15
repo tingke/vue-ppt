@@ -10,6 +10,7 @@
         @copy="(i) => state.copySlide(i)"
         @remove="(i) => state.deleteSlide(i)"
         @move="(from, to) => state.moveSlide(from, to)"
+        @type-change="(i, t) => state.setSlideType(i, t)"
       />
     <div
       ref="canvasRef"

@@ -151,13 +151,23 @@
 
       <!-- ==================== 插入：幻灯片 / 背景 / 组件（图标数据取 core TOOLBAR_ICONS） ==================== -->
       <div v-else class="vpk-tool-groups">
-        <!-- 幻灯片 -->
+        <!-- 幻灯片：点击弹出类型下拉（自定义页 / 特殊点位页（循环）/ 点位页（循环）） -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
-            <button type="button" class="vpk-tool-btn" title="新建幻灯片" @click="createSlide">
-              <span class="vpk-icon" v-html="icons.slide"></span>
-              <span>新建幻灯片</span>
-            </button>
+            <div class="vpk-tool-anchor">
+              <button type="button" class="vpk-tool-btn" title="新建幻灯片"
+                :class="{ active: slideTypeMenuVisible }" @click="toggleSlideTypeMenu($event)">
+                <span class="vpk-icon" v-html="icons.slide"></span>
+                <span>新建幻灯片</span>
+                <i class="vpk-caret-down" />
+              </button>
+
+              <div v-if="slideTypeMenuVisible" class="vpk-slide-type-menu" :style="slideTypePopupStyle">
+                <div v-for="t in slideTypes" :key="t.value" class="vpk-slide-type-item" @click="onCreateSlide(t.value)">
+                  {{ t.label }}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -229,6 +239,7 @@ import {
   ORDER_OPTIONS,
   RICH_TEXT_COMMAND,
   RICH_TEXT_STATE,
+  SLIDE_TYPES,
   TOOLBAR_ICONS,
   createImageElement,
   createTextElement,
@@ -238,6 +249,7 @@ import {
   PptDocumentModel,
   PptElementModel,
   PptImageElement,
+  PptSlideType,
   PptTextAlign,
   PptTextElement,
   RichTextState,
@@ -275,6 +287,10 @@ export default Vue.extend({
       tablePopupStyle: {} as Record<string, string>,
       // 背景图片图库弹窗显隐（上传与多选逻辑在 BgGalleryDialog 内）
       bgDialogVisible: false,
+      // 新建幻灯片类型下拉（候选项取 core SLIDE_TYPES，双端一致）
+      slideTypeMenuVisible: false,
+      slideTypePopupStyle: {} as Record<string, string>,
+      slideTypes: SLIDE_TYPES,
       // 编辑态光标处富文本状态（RICH_TEXT_STATE 回显）
       richtextState: null as RichTextState | null,
       // 供模板渲染的静态配置（候选项由 core 预设共享，双端一致）
@@ -378,9 +394,18 @@ export default Vue.extend({
       // 粘贴：克隆剪贴板元素插入当前页
       this.state.pasteElement();
     },
-    createSlide() {
+    // 新建幻灯片：按所选类型在当前页后新建（缺省自定义页）
+    toggleSlideTypeMenu(e: Event) {
+      this.slideTypeMenuVisible = !this.slideTypeMenuVisible;
+      if (this.slideTypeMenuVisible) this.slideTypePopupStyle = this.anchorPopupStyle(e, 170);
+    },
+    closeSlideTypeMenu() {
+      this.slideTypeMenuVisible = false;
+    },
+    onCreateSlide(type: PptSlideType) {
+      this.closeSlideTypeMenu();
       if (!this.state) return;
-      this.state.createSlide();
+      this.state.createSlide(type);
     },
     orderBy(command: 'up' | 'top' | 'down' | 'bottom') {
       if (!this.state || !this.selectedEl) return;
@@ -448,6 +473,7 @@ export default Vue.extend({
     closePopups() {
       this.colorAnchor = null;
       this.closeTablePicker();
+      this.closeSlideTypeMenu();
     },
     toggleColorPicker(anchor: 'fill' | 'fontColor', e: Event) {
       this.colorAnchor = this.colorAnchor === anchor ? null : anchor;
@@ -535,13 +561,16 @@ export default Vue.extend({
         ? (this.$el as HTMLElement).querySelector('.vpk-table-picker')
         : this.colorAnchor
           ? (this.$el as HTMLElement).querySelector('.vpk-color-popup')
-          : null;
+          : this.slideTypeMenuVisible
+            ? (this.$el as HTMLElement).querySelector('.vpk-slide-type-menu')
+            : null;
       if (popup) {
         const anchor = popup.closest('.vpk-tool-anchor');
         if (anchor && anchor.contains(target)) return;
       }
       if (this.colorAnchor) this.colorAnchor = null;
       if (this.tablePickerVisible) this.closeTablePicker();
+      if (this.slideTypeMenuVisible) this.closeSlideTypeMenu();
     },
   },
 });
@@ -656,6 +685,40 @@ export default Vue.extend({
 .vpk-tool-anchor {
   position: relative;
   display: flex;
+}
+
+/* 新建幻灯片类型下拉：fixed 定位（同色板/表格弹层，避免被滚动容器裁剪） */
+.vpk-slide-type-menu {
+  position: fixed;
+  z-index: 2100;
+  min-width: 170px;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.vpk-slide-type-item {
+  padding: 6px 12px;
+  color: #303133;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vpk-slide-type-item:hover {
+  background: #f5f7fa;
+  color: var(--vpk-primary, #409eff);
+}
+
+/* 下拉箭头（纯 CSS 三角，跟随文字颜色） */
+.vpk-caret-down {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
 }
 
 /* 图标容器：SVG 字符串经 v-html 内联（不带 scoped 标记），::v-deep 穿透设置尺寸 */

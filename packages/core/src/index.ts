@@ -5,9 +5,14 @@ export interface PptDocumentModel {
   warnings: string[];
 }
 
+/** 页面类型：自定义页 / 特殊点位页（循环）/ 点位页（循环） */
+export type PptSlideType = 'custom' | 'pointSpecial' | 'point';
+
 export interface PptSlideModel {
   id: string;
   elements: PptElementModel[];
+  /** 页面类型，缺省视为 custom（自定义页） */
+  slideType?: PptSlideType;
 }
 
 export type PptElementModel = PptTextElement | PptImageElement | PptShapeElement | PptTableElement;
