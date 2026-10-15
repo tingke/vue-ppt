@@ -1,6 +1,6 @@
 <template>
   <!-- 静态渲染路径（缩略图等无交互场景）：不挂 ProseMirror，白名单过滤后 v-html -->
-  <div v-if="static" class="vpk-text-view" :style="containerStyle" v-html="staticHtml"></div>
+  <div v-if="static" class="vpk-text-view ProseMirror-static" :style="containerStyle" v-html="staticHtml"></div>
   <!-- 常驻 ProseMirror 编辑器：editable 切换可编辑（无 v-if 销毁重建，参考 PPTist TextElement） -->
   <div v-else ref="containerRef" class="vpk-text-view" :style="containerStyle" @mousedown="onMouseDown">
     <RichEditor
@@ -107,7 +107,5 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.vpk-text-view :deep(p) {
-  margin: 0;
-}
+/* 段落 margin 由全局 .ProseMirror / .ProseMirror-static 规则接管（含段间距 --paragraphSpace） */
 </style>
