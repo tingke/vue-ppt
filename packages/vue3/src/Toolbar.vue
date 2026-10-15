@@ -291,9 +291,14 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 组件：文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
+        <!-- 组件：业务文本 / 文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
+            <button type="button" class="vpk-tool-btn" title="插入业务文本（支持业务字段混排）" @click="insertBizTextElement">
+              <span class="vpk-icon" v-html="ICONS.text"></span>
+              <span>业务文本</span>
+            </button>
+
             <button type="button" class="vpk-tool-btn" title="插入文本" @click="insertTextElement">
               <span class="vpk-icon" v-html="ICONS.text"></span>
               <span>文本</span>
@@ -346,6 +351,7 @@ import {
   RICH_TEXT_STATE,
   SLIDE_TYPES,
   TOOLBAR_ICONS,
+  createBizTextElement,
   createImageElement,
   createTextElement,
   readFileAsImage,
@@ -382,7 +388,11 @@ const state = computed(() => props.state);
 // 兜底 sharedEmitter 供脱离 PptEditor 树单独使用 Toolbar 的场景
 const emitter = inject<EditorEmitter>(EDITOR_EMITTER, sharedEmitter);
 const selectedEl = computed(() => state.value?.selectedElement.value ?? null);
-const textEl = computed(() => (selectedEl.value && selectedEl.value.type === 'text' ? selectedEl.value : null));
+const textEl = computed(() => {
+  const el = selectedEl.value;
+  // 业务文本与文本元素样式字段一致：字体/段落等样式操作复用文本逻辑
+  return el && (el.type === 'text' || el.type === 'bizText') ? (el as PptTextElement) : null;
+});
 const isTextSelected = computed(() => !!textEl.value);
 // 文本元素是否处于编辑态：编辑态下的格式命令作用于选中文字（富文本），否则作用于整元素
 const isEditingText = computed(() => !!selectedEl.value && state.value?.editingElementId.value === selectedEl.value.id);
@@ -538,6 +548,10 @@ function emitInsert(element: PptElementModel) {
 
 function insertTextElement() {
   emitInsert(createTextElement(props.doc));
+}
+
+function insertBizTextElement() {
+  emitInsert(createBizTextElement(props.doc));
 }
 
 // 图片插入：文件选择 → dataURL → 按原图比例缩放至文档尺寸内并居中

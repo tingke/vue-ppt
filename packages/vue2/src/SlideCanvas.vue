@@ -24,7 +24,7 @@
           :element="el"
           :scale="scale"
           :editing="el.id === editingId"
-          :static="el.type === 'text' ? static : undefined"
+          :static="el.type === 'text' || el.type === 'bizText' ? static : undefined"
           @commit="onTextCommit(el, $event)"
           @update="onTextUpdate(el, $event)"
         />
@@ -237,8 +237,8 @@ export default Vue.extend({
         { direction: 'RIGHT_BOTTOM', style: { ...base, left: fullW + 'px', top: fullH + 'px', cursor: 'nwse-resize' } },
       ];
 
-      // 文本元素仅支持左右调整宽度（参考 PPTist textElementResizeHandlers）
-      if (el.type === 'text') {
+      // 文本类元素（文本/业务文本）仅支持左右调整宽度（参考 PPTist textElementResizeHandlers）
+      if (el.type === 'text' || el.type === 'bizText') {
         return all.filter((h) => h.direction === 'LEFT' || h.direction === 'RIGHT');
       }
       return all;
@@ -313,7 +313,8 @@ export default Vue.extend({
     // ==================== 文本编辑与事件 ====================
 
     onElementDblClick(el: PptElementModel) {
-      if (this.static || el.type !== 'text') return;
+      // 文本类元素（文本/业务文本）双击进入编辑
+      if (this.static || (el.type !== 'text' && el.type !== 'bizText')) return;
       this.$emit('edit-text', el);
     },
 

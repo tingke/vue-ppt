@@ -5,3 +5,6 @@
 import { createEmitter, EditorEmitter } from '@vue-ppt-kit/core';
 
 export const sharedEmitter: EditorEmitter = createEmitter();
+
+/** 业务变量树 inject key：PptStage provide，业务文本组件注入（fx 级联选择数据源） */
+export const BIZ_VARIABLES_KEY = 'vpkBizVariables';

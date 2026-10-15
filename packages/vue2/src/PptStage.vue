@@ -75,9 +75,10 @@
 <script lang="ts">
 import Vue from 'vue';
 import { computed, provide, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api';
-import { createEmitter, EDITOR_EMITTER, PptDocumentModel, PptElementModel } from '@vue-ppt-kit/core';
+import { createEmitter, EDITOR_EMITTER, PptBizVariableNode, PptDocumentModel, PptElementModel } from '@vue-ppt-kit/core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
+import { BIZ_VARIABLES_KEY } from './emitter';
 import SlideThumbnails from './SlideThumbnails.vue';
 import SlideCanvas from './SlideCanvas.vue';
 import Toolbar from './Toolbar.vue';
@@ -87,11 +88,16 @@ export default Vue.extend({
   components: { SlideThumbnails, SlideCanvas, Toolbar },
   props: {
     document: { type: Object as () => PptDocumentModel, default: undefined },
+    /** 业务变量树：业务文本组件 fx 级联选择数据源（编辑器级配置，不进文档数据） */
+    bizVariables: { type: Array as unknown as () => PptBizVariableNode[], default: (): PptBizVariableNode[] => [] },
   },
   setup(props, { refs }) {
     // 编辑器实例级事件转发器：Toolbar / TextElement 等经 inject 获取，
     // 页面上多个 PptStage 实例时富文本命令 / 状态回显互不串扰
     provide(EDITOR_EMITTER, createEmitter());
+
+    // 业务变量树下发（业务文本组件 inject）；树为静态配置，不做深层响应
+    provide(BIZ_VARIABLES_KEY, props.bizVariables || []);
 
     const initialDoc = props.document as PptDocumentModel | undefined;
     const state = useSlides(initialDoc ? { document: initialDoc } : undefined);

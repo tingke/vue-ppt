@@ -79,17 +79,21 @@ import { ref, computed, reactive, onMounted, onUnmounted, provide, watch, type P
 import {
   createEmitter,
   EDITOR_EMITTER,
+  type PptBizVariableNode,
   type PptDocumentModel,
   type PptElementModel,
 } from '@vue-ppt-kit/core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
+import { BIZ_VARIABLES_KEY } from './emitter';
 import SlideThumbnails from './SlideThumbnails.vue';
 import SlideCanvas from './SlideCanvas.vue';
 import Toolbar from './Toolbar.vue';
 
 const props = defineProps({
   document: { type: Object as PropType<PptDocumentModel>, default: undefined },
+  /** 业务变量树：业务文本组件 fx 级联选择数据源（编辑器级配置，不进文档数据） */
+  bizVariables: { type: Object as PropType<PptBizVariableNode[]>, default: undefined },
 });
 
 // 保存事件：由 Toolbar 触发，转发给宿主应用自行处理持久化
@@ -98,6 +102,9 @@ const emit = defineEmits<{ (e: 'save'): void }>();
 // 编辑器实例级事件转发器：Toolbar / TextElement 等经 inject 获取，
 // 页面上多个 PptEditor 实例时富文本命令 / 状态回显互不串扰
 provide(EDITOR_EMITTER, createEmitter());
+
+// 业务变量树下发（业务文本组件 inject）；树为静态配置，不做深层响应
+provide(BIZ_VARIABLES_KEY, props.bizVariables ?? []);
 
 const state = useSlides(props.document ? { document: props.document } : undefined);
 

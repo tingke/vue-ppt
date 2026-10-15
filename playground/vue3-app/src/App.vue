@@ -1,12 +1,55 @@
 <template>
   <main class="app">
     <h1>Vue PPT Kit</h1>
-    <p>Vue 3 + Element Plus Playground — 顶部工具栏 + 左侧缩略图（含 3 种页面类型）</p>
-    <PptEditor class="stage" :document="doc" />
+    <p>Vue 3 + Element Plus Playground — 顶部工具栏 + 左侧缩略图（含 3 种页面类型 / 业务文本）</p>
+    <PptEditor class="stage" :document="doc" :biz-variables="bizVariables" />
   </main>
 </template>
 <script setup lang="ts">
-import type { PptDocumentModel } from '@vue-ppt-kit/core';
+import type { PptBizVariableNode, PptDocumentModel } from '@vue-ppt-kit/core';
+
+// 业务变量树（参考需求图 2）：业务文本组件 fx 级联选择数据源
+const DATE_FORMATS: PptBizVariableNode[] = ['yyyy-mm-dd', 'yyyy-m-d', 'yyyy/m/d', 'yyyy/mm/dd', 'yyyy年m月d日', 'yy-mm-dd', 'm/d', 'mm.dd', 'm.d', 'mmdd']
+  .map((label) => ({ label }));
+
+const bizVariables: PptBizVariableNode[] = [
+  {
+    label: '发布详情',
+    children: [
+      { label: '方案名称' },
+      { label: '媒体类型' },
+      { label: '发布开始时间', children: DATE_FORMATS },
+      { label: '发布预计开始时间', children: DATE_FORMATS },
+      { label: '发布结束时间', children: DATE_FORMATS },
+      { label: '发布年', children: DATE_FORMATS.slice(0, 5) },
+      { label: '发布月', children: DATE_FORMATS.slice(6) },
+      { label: '发布天', children: DATE_FORMATS.slice(6) },
+      { label: '发布总天数' },
+      { label: '发布小区数' },
+      { label: '发布小区签约数' },
+      { label: '发布小区实际签约数' },
+      { label: '发布省' },
+      { label: '发布城市' },
+      { label: '发布区' },
+      { label: '发布区域' },
+      { label: '社区地址' },
+      { label: '社区名称' },
+      { label: '社区属性' },
+      { label: '社区人口' },
+      { label: '户数' },
+      { label: '受众描述' },
+      { label: '最高楼层' },
+      { label: '最低楼层' },
+    ],
+  },
+  {
+    label: '社区层级',
+    children: [{ label: '社区序号' }, { label: '点位序号' }],
+  },
+  { label: '媒体尺寸' },
+  { label: '序号' },
+  { label: '页码' },
+];
 
 const doc: PptDocumentModel = {
   width: 960,
@@ -53,6 +96,18 @@ const doc: PptDocumentModel = {
       elements: [
         { id: 'h1', type: 'text', x: 60, y: 60, width: 700, height: 60, text: '第 4 页 · 自定义页', fontSize: 32, color: '#303133' },
         { id: 'h2', type: 'text', x: 60, y: 160, width: 600, height: 60, text: '类型显示在缩略图下方', fontSize: 18, color: '#909399' },
+        // 业务文本：普通文字与业务字段 tag 混排（编辑态点 fx 插入变量）
+        {
+          id: 'h3',
+          type: 'bizText',
+          x: 60,
+          y: 250,
+          width: 640,
+          height: 40,
+          fontSize: 16,
+          color: '#303133',
+          text: '「<span data-biz-tag="发布详情/方案名称">方案名称</span>」发布时间：<span data-biz-tag="发布详情/发布开始时间/yyyy-mm-dd">发布开始时间</span> · 第<span data-biz-tag="序号">序号</span>页',
+        },
       ],
     },
   ],

@@ -81,12 +81,22 @@ export class TextEditor {
         history(),
         keymap({
           ...markCommands,
+          // 业务 tag 整删：光标紧邻 tag 之前（nodeBefore 为 biz_tag）时，
+          // 一次退格删除整个 tag（缺省行为是先选中再删，交互偏重）
+          Backspace: (pmState, dispatch) => {
+            const { $from, empty } = pmState.selection;
+            if (!empty) return false;
+            const before = $from.nodeBefore;
+            if (!before || before.type.name !== 'biz_tag') return false;
+            if (dispatch) dispatch(pmState.tr.delete($from.pos - before.nodeSize, $from.pos));
+            return true;
+          },
           // Escape 交由宿主结束编辑（沿用现有"Esc 提交"交互）
           Escape: () => {
             options.onEscape?.(this.commitPayload());
             return true;
           },
-          // Backspace/Delete/Enter 等原生编辑键
+          // Backspace/Delete/Enter 等原生编辑键（上面的整删未命中时落到 baseKeymap）
           ...baseKeymap,
         }),
         new Plugin({
@@ -185,6 +195,15 @@ export class TextEditor {
     this.options.onSelectionChange?.(this.getSelectionState());
   }
 
+  /** 光标处插入业务字段 tag（fx 选择后调用），插入点为当前选区/上次光标位置 */
+  insertBizTag(tag: { key: string; label: string }): void {
+    const { state } = this.view;
+    const node = richSchema.nodes.biz_tag.create(tag);
+    this.view.dispatch(state.tr.replaceSelectionWith(node, true));
+    this.view.focus();
+    this.flushInput();
+  }
+
   /** 光标处富文本状态（供工具栏回显） */
   getSelectionState(): RichTextState {
     const marks = this.view.state.selection.$from.marks();
@@ -200,9 +219,19 @@ export class TextEditor {
     };
   }
 
-  /** 内容是否为空（无可见文本时宿主删除元素，沿用 checkEmptyText 语义） */
+  /** 内容是否为空（无可见文本时宿主删除元素，沿用 checkEmptyText 语义）；
+   *  仅含业务 tag 的文档 textContent 为空但内容非空，需遍历节点判断 */
   isEmpty(): boolean {
-    return !this.view.state.doc.textContent.trim();
+    if (this.view.state.doc.textContent.trim()) return false;
+    let hasTag = false;
+    this.view.state.doc.descendants((node) => {
+      if (node.type.name === 'biz_tag') {
+        hasTag = true;
+        return false;
+      }
+      return true;
+    });
+    return !hasTag;
   }
 
   /** 当前内容 HTML（空文档输出空串） */

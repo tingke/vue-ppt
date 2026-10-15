@@ -3,7 +3,7 @@
  * 工具栏「插入」只负责选类型与时机，元素的默认尺寸 / 样式 / 位置统一在此维护，
  * 保证双端插入行为一致。图片文件读取工具也集中在此。
  */
-import type { PptImageElement, PptTableElement, PptTableCell, PptTextElement } from './index';
+import type { PptBizTextElement, PptImageElement, PptTableElement, PptTableCell, PptTextElement } from './index';
 
 let idCounter = 0;
 
@@ -38,6 +38,11 @@ export function createTextElement(doc: DocSize): PptTextElement {
     // 其余可选属性（fontFamily/bold/align/lineHeight/fill）按「缺省继承」设计不预置：
     // 渲染层对缺省值兜底，且可区分「未设置」与「显式置空」
   };
+}
+
+/** 插入业务文本元素：默认尺寸 / 样式与文本元素一致（业务字段 tag 经 fx 选择后插入） */
+export function createBizTextElement(doc: DocSize): PptBizTextElement {
+  return { ...createTextElement(doc), type: 'bizText' };
 }
 
 /** 插入图片元素：按原图比例缩放至画布 fitRatio 比例范围内并居中（参考 PPTist createImageElement） */

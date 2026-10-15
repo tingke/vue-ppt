@@ -185,9 +185,14 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 组件：文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
+        <!-- 组件：业务文本 / 文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
+            <button type="button" class="vpk-tool-btn" title="插入业务文本（支持业务字段混排）" @click="insertBizTextElement">
+              <span class="vpk-icon" v-html="icons.text"></span>
+              <span>业务文本</span>
+            </button>
+
             <button type="button" class="vpk-tool-btn" title="插入文本" @click="insertTextElement">
               <span class="vpk-icon" v-html="icons.text"></span>
               <span>文本</span>
@@ -241,6 +246,7 @@ import {
   RICH_TEXT_STATE,
   SLIDE_TYPES,
   TOOLBAR_ICONS,
+  createBizTextElement,
   createImageElement,
   createTextElement,
   readFileAsImage,
@@ -315,7 +321,9 @@ export default Vue.extend({
       return ((this.state && this.state.selectedElement.value) || null) as PptElementModel | null;
     },
     textEl(): PptTextElement | null {
-      return this.selectedEl && this.selectedEl.type === 'text' ? (this.selectedEl as PptTextElement) : null;
+      const el = this.selectedEl;
+      // 业务文本与文本元素样式字段一致：字体/段落等样式操作复用文本逻辑
+      return el && (el.type === 'text' || el.type === 'bizText') ? (el as unknown as PptTextElement) : null;
     },
     isTextSelected(): boolean {
       return !!this.textEl;
@@ -513,6 +521,9 @@ export default Vue.extend({
     },
     insertTextElement() {
       this.emitInsert(createTextElement(this.doc));
+    },
+    insertBizTextElement() {
+      this.emitInsert(createBizTextElement(this.doc));
     },
     triggerImagePick() {
       (this.$refs.imageInput as HTMLInputElement).click();

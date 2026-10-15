@@ -62,6 +62,10 @@ export default Vue.extend({
     execCommand(action: RichTextAction) {
       this.editor?.execCommand(action);
     },
+    // 供父组件调用：光标处插入业务字段 tag（业务文本组件 fx 选择后）
+    insertBizTag(tag: { key: string; label: string }) {
+      this.editor?.insertBizTag(tag);
+    },
   },
 });
 </script>
@@ -69,6 +73,18 @@ export default Vue.extend({
 <style>
 .vpk-rich-editor {
   cursor: text;
+}
+/* 业务字段 tag（原子节点渲染，编辑区与静态渲染同样式）：芯片外观，contenteditable=false 保证不可编辑 */
+.vpk-biz-tag {
+  display: inline-block;
+  padding: 0 6px;
+  margin: 0 2px;
+  background: #ecf5ff;
+  border: 1px solid #b3d8ff;
+  border-radius: 3px;
+  color: var(--vpk-primary, #409eff);
+  line-height: 1.4;
+  white-space: nowrap;
 }
 /* ProseMirror 富文本默认样式（参考 PPTist prosemirror.scss）：
    同时覆盖编辑区（.ProseMirror）与静态渲染（.ProseMirror-static）。

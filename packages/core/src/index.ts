@@ -15,7 +15,7 @@ export interface PptSlideModel {
   slideType?: PptSlideType;
 }
 
-export type PptElementModel = PptTextElement | PptImageElement | PptShapeElement | PptTableElement;
+export type PptElementModel = PptTextElement | PptBizTextElement | PptImageElement | PptShapeElement | PptTableElement;
 
 export interface PptBaseElement {
   id: string;
@@ -43,6 +43,29 @@ export interface PptTextElement extends PptBaseElement {
   lineHeight?: number;
   /** 文本框填充色，空字符串表示无填充 */
   fill?: string;
+}
+
+/**
+ * 业务变量树节点（业务文本组件的 fx 级联选择数据源，编辑器级配置，不进文档数据）：
+ * 有 children 为分组（可继续展开），叶子节点可选。
+ */
+export interface PptBizVariableNode {
+  /** 显示名（tag 标签文字 / 级联菜单条目文字） */
+  label: string;
+  /** 说明文字（如图 1 的「新打开网页的对象」） */
+  description?: string;
+  /** 子节点，缺省为叶子 */
+  children?: PptBizVariableNode[];
+}
+
+/**
+ * 业务文本元素：普通文本与业务字段 tag 混排。
+ * text 与 PptTextElement.text 同构（受限内联 HTML），业务字段以
+ * <span data-biz-tag="路径">标签</span> 嵌入（ProseMirror biz_tag 原子节点，
+ * 不可编辑，退格整体删除）。
+ */
+export interface PptBizTextElement extends Omit<PptTextElement, 'type'> {
+  type: 'bizText';
 }
 
 export interface PptImageElement extends PptBaseElement {
@@ -151,6 +174,8 @@ export function sanitizeRichText(html: string): string {
         return;
       }
       Array.from(el.attributes).forEach((attr) => {
+        // 业务字段 tag 标记：整体保留（标签文字为子文本节点，天然保留）
+        if (attr.name === 'data-biz-tag' && el.tagName === 'SPAN') return;
         if (attr.name === 'style' && el.tagName === 'SPAN') {
           const kept = (attr.value.match(RICH_ALLOWED_STYLE) || []).join('; ');
           if (kept) el.setAttribute('style', kept);

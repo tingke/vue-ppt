@@ -21,6 +21,31 @@ export const richSchema = new Schema({
       toDOM: () => ['p', 0],
     },
     text: { group: 'inline' },
+    /**
+     * 业务字段 tag（业务文本组件）：inline 原子节点，内容不可编辑，
+     * 选中/删除以整个节点为单位（Backspace 整删逻辑在 controller）。
+     * 序列化为 <span data-biz-tag="路径">标签</span>，key 为变量树路径（/ 分隔）。
+     */
+    biz_tag: {
+      inline: true,
+      group: 'inline',
+      atom: true,
+      attrs: { key: { default: '' }, label: { default: '' } },
+      parseDOM: [
+        {
+          tag: 'span[data-biz-tag]',
+          getAttrs: (dom: HTMLElement) => ({
+            key: dom.getAttribute('data-biz-tag') || '',
+            label: dom.textContent || '',
+          }),
+        },
+      ],
+      toDOM: (node: PMNode) => [
+        'span',
+        { 'data-biz-tag': node.attrs.key, class: 'vpk-biz-tag', contenteditable: 'false' },
+        node.attrs.label,
+      ],
+    },
     hard_break: {
       inline: true,
       group: 'inline',
