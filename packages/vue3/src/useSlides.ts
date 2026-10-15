@@ -1,5 +1,5 @@
 import { reactive, computed } from 'vue';
-import { createEmptyDocument, type PptDocumentModel, type PptSlideModel, type PptElementModel } from '@vue-ppt-kit/core';
+import { createEmptyDocument, genId, type PptDocumentModel, type PptSlideModel, type PptElementModel } from '@vue-ppt-kit/core';
 
 export function useSlides(options?: { document?: PptDocumentModel }) {
   const doc = reactive<PptDocumentModel>(
@@ -23,10 +23,6 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
     return slide.elements.find((e) => e.id === selectedElementId.value) ?? null;
   });
 
-  function genId() {
-    return Math.random().toString(36).slice(2, 10);
-  }
-
   function createSlide() {
     doc.slides.splice(slideIndex.value + 1, 0, { id: genId(), elements: [] });
     slideIndex.value += 1;
@@ -42,7 +38,9 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
   function copySlide(index?: number) {
     const i = index ?? slideIndex.value;
     const src = doc.slides[i];
-    doc.slides.splice(i + 1, 0, JSON.parse(JSON.stringify({ ...src, id: genId() })));
+    const clone = structuredClone(src);
+    clone.id = genId();
+    doc.slides.splice(i + 1, 0, clone);
     slideIndex.value = i + 1;
   }
 
@@ -85,7 +83,7 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
     if (!slide) return;
     const i = slide.elements.findIndex((e) => e.id === id);
     if (i < 0) return;
-    const clone = JSON.parse(JSON.stringify(slide.elements[i])) as PptElementModel;
+    const clone = structuredClone(slide.elements[i]) as PptElementModel;
     clone.id = genId();
     clone.x += 20;
     clone.y += 20;
@@ -122,14 +120,14 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
   function setClipboard(id: string) {
     const el = doc.slides[slideIndex.value]?.elements.find((e) => e.id === id);
     if (!el) return;
-    clipboard.value = JSON.parse(JSON.stringify(el)) as PptElementModel;
+    clipboard.value = structuredClone(el) as PptElementModel;
   }
 
   // 粘贴：克隆剪贴板元素，偏移一段距离插入当前页并选中
   function pasteElement() {
     const slide = doc.slides[slideIndex.value];
     if (!slide || !clipboard.value) return;
-    const clone = JSON.parse(JSON.stringify(clipboard.value)) as PptElementModel;
+    const clone = structuredClone(clipboard.value) as PptElementModel;
     clone.id = genId();
     clone.x += 20;
     clone.y += 20;

@@ -74,8 +74,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted, watch, type PropType } from 'vue';
-import type { PptDocumentModel, PptElementModel } from '@vue-ppt-kit/core';
+import { ref, computed, reactive, onMounted, onUnmounted, provide, watch, type PropType } from 'vue';
+import {
+  createEmitter,
+  EDITOR_EMITTER,
+  type PptDocumentModel,
+  type PptElementModel,
+} from '@vue-ppt-kit/core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
 import SlideThumbnails from './SlideThumbnails.vue';
@@ -88,6 +93,10 @@ const props = defineProps({
 
 // 保存事件：由 Toolbar 触发，转发给宿主应用自行处理持久化
 const emit = defineEmits<{ (e: 'save'): void }>();
+
+// 编辑器实例级事件转发器：Toolbar / TextElement 等经 inject 获取，
+// 页面上多个 PptEditor 实例时富文本命令 / 状态回显互不串扰
+provide(EDITOR_EMITTER, createEmitter());
 
 const state = useSlides(props.document ? { document: props.document } : undefined);
 

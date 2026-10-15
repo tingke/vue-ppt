@@ -73,8 +73,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { computed, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api';
-import { PptDocumentModel, PptElementModel } from '@vue-ppt-kit/core';
+import { computed, provide, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api';
+import { createEmitter, EDITOR_EMITTER, PptDocumentModel, PptElementModel } from '@vue-ppt-kit/core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
 import SlideThumbnails from './SlideThumbnails.vue';
@@ -88,6 +88,10 @@ export default Vue.extend({
     document: { type: Object as () => PptDocumentModel, default: undefined },
   },
   setup(props, { refs }) {
+    // 编辑器实例级事件转发器：Toolbar / TextElement 等经 inject 获取，
+    // 页面上多个 PptStage 实例时富文本命令 / 状态回显互不串扰
+    provide(EDITOR_EMITTER, createEmitter());
+
     const initialDoc = props.document as PptDocumentModel | undefined;
     const state = useSlides(initialDoc ? { document: initialDoc } : undefined);
 

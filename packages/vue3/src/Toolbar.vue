@@ -11,12 +11,9 @@
       <div v-if="activeTab === 'home'" class="vpk-tool-groups">
         <!-- 保存 -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">保存</div>
           <div class="vpk-group-items">
             <button type="button" class="vpk-icon-btn" title="保存" @click="emit('save')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8" /><path d="M7 3v5h8" />
-              </svg>
+              <span class="vpk-icon" v-html="ICONS.save"></span>
             </button>
           </div>
         </div>
@@ -25,7 +22,6 @@
 
         <!-- 编辑：复制 / 粘贴 -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">编辑</div>
           <div class="vpk-group-items">
             <button
               type="button"
@@ -34,9 +30,7 @@
               :disabled="!selectedEl"
               @click="state?.setClipboard(selectedEl!.id)"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
+              <span class="vpk-icon" v-html="ICONS.copy"></span>
             </button>
             <button
               type="button"
@@ -45,9 +39,7 @@
               :disabled="!state?.clipboard.value"
               @click="state?.pasteElement()"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" />
-              </svg>
+              <span class="vpk-icon" v-html="ICONS.paste"></span>
             </button>
           </div>
         </div>
@@ -56,7 +48,6 @@
 
         <!-- 字体：字体 / 填充色 / 字号 / 字体颜色 / 加粗（仅文本元素可用） -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">字体</div>
           <div class="vpk-group-items" :class="{ disabled: !isTextSelected }">
             <select
               class="vpk-select font-select"
@@ -66,7 +57,7 @@
               @change="onFontNameChange(($event.target as HTMLSelectElement).value)"
             >
               <option value="">字体</option>
-              <option v-for="f in fontFamilies" :key="f.label" :value="f.value" :style="{ fontFamily: f.value }">{{ f.label }}</option>
+              <option v-for="f in FONT_FAMILIES" :key="f.label" :value="f.value" :style="{ fontFamily: f.value }">{{ f.label }}</option>
             </select>
 
             <div class="vpk-tool-anchor">
@@ -80,31 +71,17 @@
                 @click="toggleColorPicker('fill', $event)"
               >
                 <span class="vpk-color-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                  </svg>
+                  <span class="vpk-icon" v-html="ICONS.fill"></span>
                   <i class="vpk-color-block" :style="{ background: textEl?.fill || 'transparent' }" />
                 </span>
               </button>
-              <div v-if="colorAnchor === 'fill'" class="vpk-color-popup" :style="colorPopupStyle">
-                <div class="vpk-color-swatches">
-                  <button
-                    v-for="c in palette"
-                    :key="c"
-                    type="button"
-                    class="vpk-swatch"
-                    :style="{ background: c }"
-                    :title="c"
-                    @mousedown.prevent
-                    @click="applyColor(c)"
-                  />
-                </div>
-                <div class="vpk-color-custom">
-                  <span class="vpk-color-custom-label">自定义</span>
-                  <input type="color" :value="currentColor" @input="applyColor(($event.target as HTMLInputElement).value)" />
-                  <button type="button" class="vpk-color-none" @mousedown.prevent @click="applyColor('')">无填充</button>
-                </div>
-              </div>
+              <ColorPopup
+                v-if="colorAnchor === 'fill'"
+                :popup-style="colorPopupStyle"
+                :current-color="currentColor"
+                show-none
+                @select="applyColor"
+              />
             </div>
 
             <select
@@ -115,7 +92,7 @@
               @change="onFontSizeChange(($event.target as HTMLSelectElement).value)"
             >
               <option value="">字号</option>
-              <option v-for="s in fontSizes" :key="s" :value="s">{{ s }}</option>
+              <option v-for="s in FONT_SIZES" :key="s" :value="s">{{ s }}</option>
             </select>
 
             <div class="vpk-tool-anchor">
@@ -129,30 +106,16 @@
                 @click="toggleColorPicker('fontColor', $event)"
               >
                 <span class="vpk-color-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 7V4h16v3" /><path d="M12 4v16" /><path d="M9 20h6" />
-                  </svg>
+                  <span class="vpk-icon" v-html="ICONS.text"></span>
                   <i class="vpk-color-block" :style="{ background: displayState.foreColor || textEl?.color || '#303133' }" />
                 </span>
               </button>
-              <div v-if="colorAnchor === 'fontColor'" class="vpk-color-popup" :style="colorPopupStyle">
-                <div class="vpk-color-swatches">
-                  <button
-                    v-for="c in palette"
-                    :key="c"
-                    type="button"
-                    class="vpk-swatch"
-                    :style="{ background: c }"
-                    :title="c"
-                    @mousedown.prevent
-                    @click="applyColor(c)"
-                  />
-                </div>
-                <div class="vpk-color-custom">
-                  <span class="vpk-color-custom-label">自定义</span>
-                  <input type="color" :value="currentColor" @input="applyColor(($event.target as HTMLInputElement).value)" />
-                </div>
-              </div>
+              <ColorPopup
+                v-if="colorAnchor === 'fontColor'"
+                :popup-style="colorPopupStyle"
+                :current-color="currentColor"
+                @select="applyColor"
+              />
             </div>
 
             <button
@@ -197,12 +160,11 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 段落：对齐 / 行距（仅文本元素可用） -->
+        <!-- 段落：对齐 / 行距（仅文本元素可用），图标数据取 core ALIGN_ICONS -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">段落</div>
           <div class="vpk-group-items" :class="{ disabled: !isTextSelected }">
             <button
-              v-for="a in alignOptions"
+              v-for="a in ALIGN_OPTIONS"
               :key="a.value"
               type="button"
               class="vpk-icon-btn"
@@ -211,12 +173,7 @@
               :class="{ active: currentAlign === a.value }"
               @click="updateText({ align: a.value })"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M3 5h18" /><path d="M3 10h18" /><path d="M3 15h18" /><path d="M3 20h18" />
-                <template v-if="a.value === 'left'"><path d="M3 10h10" /><path d="M3 15h7" /></template>
-                <template v-else-if="a.value === 'center'"><path d="M7 10h10" /><path d="M8.5 15h7" /></template>
-                <template v-else-if="a.value === 'right'"><path d="M11 10h10" /><path d="M14 15h7" /></template>
-              </svg>
+              <span class="vpk-icon" v-html="ALIGN_ICONS[a.value]"></span>
             </button>
 
             <select
@@ -227,7 +184,7 @@
               @change="updateText({ lineHeight: Number(($event.target as HTMLSelectElement).value) || undefined })"
             >
               <option value="">行距</option>
-              <option v-for="lh in lineHeights" :key="lh" :value="lh">{{ lh }}倍</option>
+              <option v-for="lh in LINE_HEIGHTS" :key="lh" :value="lh">{{ lh }}倍</option>
             </select>
           </div>
         </div>
@@ -236,7 +193,6 @@
 
         <!-- 位置：距左侧 / 距顶部 / 宽度 / 高度 -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">位置</div>
           <div class="vpk-group-items" :class="{ disabled: !selectedEl }">
             <div class="vpk-pos-grid">
               <label><span class="vpk-pos-label">距左侧</span><input
@@ -271,12 +227,11 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 排列：上移一层 / 置于顶层 / 下移一层 / 置于底层 -->
+        <!-- 排列：上移一层 / 置于顶层 / 下移一层 / 置于底层，图标数据取 core ORDER_ICONS -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">排列</div>
           <div class="vpk-group-items" :class="{ disabled: !selectedEl }">
             <button
-              v-for="o in orderOptions"
+              v-for="o in ORDER_OPTIONS"
               :key="o.command"
               type="button"
               class="vpk-icon-btn"
@@ -284,28 +239,19 @@
               :disabled="!selectedEl"
               @click="state?.orderElement(selectedEl!.id, o.command)"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="4" y="14" width="16" height="7" rx="1" />
-                <template v-if="o.command === 'up'"><path d="M12 10V3" /><path d="M8 7l4-4 4 4" /></template>
-                <template v-else-if="o.command === 'top'"><path d="M4 3h16" /><path d="M12 11V6" /><path d="M9 8.5L12 5.5l3 3" /></template>
-                <template v-else-if="o.command === 'down'"><path d="M12 3v7" /><path d="M8 6l4 4 4-4" /></template>
-                <template v-else><path d="M4 21h16" /><path d="M12 2v5" /><path d="M9 4.5l3 3 3-3" /></template>
-              </svg>
+              <span class="vpk-icon" v-html="ORDER_ICONS[o.command]"></span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- ==================== 插入：幻灯片 / 背景 / 组件 ==================== -->
+      <!-- ==================== 插入：幻灯片 / 背景 / 组件（图标数据取 core TOOLBAR_ICONS） ==================== -->
       <div v-else class="vpk-tool-groups">
         <!-- 幻灯片 -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">幻灯片</div>
           <div class="vpk-group-items">
             <button type="button" class="vpk-tool-btn" title="新建幻灯片" @click="state?.createSlide()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="14" rx="2" /><path d="M12 8v6" /><path d="M9 11h6" />
-              </svg>
+              <span class="vpk-icon" v-html="ICONS.slide"></span>
               <span>新建幻灯片</span>
             </button>
           </div>
@@ -315,12 +261,9 @@
 
         <!-- 背景 -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">背景</div>
           <div class="vpk-group-items">
             <button type="button" class="vpk-tool-btn" title="设置当前页背景图片" @click="openBgDialog">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
-              </svg>
+              <span class="vpk-icon" v-html="ICONS.image"></span>
               <span>背景图片</span>
             </button>
           </div>
@@ -330,68 +273,31 @@
 
         <!-- 组件：文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
         <div class="vpk-tool-group">
-          <div class="vpk-group-label">组件</div>
           <div class="vpk-group-items">
             <button type="button" class="vpk-tool-btn" title="插入文本" @click="insertTextElement">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 7V4h16v3" /><path d="M12 4v16" /><path d="M9 20h6" />
-              </svg>
+              <span class="vpk-icon" v-html="ICONS.text"></span>
               <span>文本</span>
             </button>
 
             <button type="button" class="vpk-tool-btn" title="插入图片" @click="triggerImagePick">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
-              </svg>
+              <span class="vpk-icon" v-html="ICONS.image"></span>
               <span>图片</span>
             </button>
 
             <div class="vpk-tool-anchor">
               <button type="button" class="vpk-tool-btn" title="插入表格" :class="{ active: tablePickerVisible }" @click="toggleTablePicker($event)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 10h18" /><path d="M9 10v10" /><path d="M15 10v10" />
-                </svg>
+                <span class="vpk-icon" v-html="ICONS.table"></span>
                 <span>表格</span>
               </button>
 
               <!-- 参考 PPTist TableGenerator：10x10 网格悬停选择行列，支持自定义输入 -->
-              <div v-if="tablePickerVisible" class="vpk-table-picker" :style="tablePopupStyle" @mouseleave="endCell = []">
-                <div class="vpk-table-picker-title">
-                  <span>{{ isCustom ? '自定义表格' : `表格 ${endCell.length ? `${endCell[0]} x ${endCell[1]}` : ''}` }}</span>
-                  <span class="vpk-table-picker-actions">
-                    <button type="button" class="vpk-table-picker-toggle" @click="isCustom = !isCustom">{{ isCustom ? '返回' : '自定义' }}</button>
-                    <span class="vpk-table-picker-close" @click="tablePickerVisible = false">×</span>
-                  </span>
-                </div>
-                <div v-if="!isCustom" class="vpk-table-picker-grid">
-                  <span v-for="row in 10" :key="row" class="vpk-picker-row">
-                    <button
-                      v-for="col in 10"
-                      :key="col"
-                      type="button"
-                      class="vpk-picker-cell"
-                      :class="{ active: endCell.length && row <= endCell[0] && col <= endCell[1] }"
-                      :aria-label="row + ' 行 ' + col + ' 列'"
-                      @mouseenter="endCell = [row, col]"
-                      @click="insertTableElement(row, col)"
-                    />
-                  </span>
-                </div>
-                <div v-else class="vpk-table-custom">
-                  <div class="vpk-table-custom-row">
-                    <label>行数：</label>
-                    <input v-model.number="customRow" type="number" min="1" max="20" />
-                  </div>
-                  <div class="vpk-table-custom-row">
-                    <label>列数：</label>
-                    <input v-model.number="customCol" type="number" min="1" max="20" />
-                  </div>
-                  <div class="vpk-table-custom-btns">
-                    <button type="button" class="vpk-btn" @click="isCustom = false">返回</button>
-                    <button type="button" class="vpk-btn primary" @click="insertCustomTable">确认</button>
-                  </div>
-                </div>
-              </div>
+              <TablePicker
+                v-if="tablePickerVisible"
+                :popup-style="tablePopupStyle"
+                :doc="doc"
+                @insert="(el) => emitInsert(el)"
+                @close="closeTablePicker"
+              />
             </div>
           </div>
         </div>
@@ -399,43 +305,43 @@
     </div>
 
     <!-- 背景图片图库弹窗：上传多张进列表，支持多选，确定后按选择顺序插入为底层图片层（可拖动/缩放） -->
-    <div v-if="bgDialogVisible" class="vpk-dialog-overlay" @mousedown.self="cancelBgDialog">
-      <div class="vpk-bg-dialog">
-        <div class="vpk-bg-dialog-header">
-          <button type="button" class="vpk-btn" @click="triggerBgUpload">＋ 上传</button>
-          <span class="vpk-dialog-close" title="关闭" @click="cancelBgDialog">×</span>
-        </div>
-        <div class="vpk-bg-gallery">
-          <div v-if="!bgImages.length" class="vpk-bg-empty">请上传图片</div>
-          <div
-            v-for="(img, i) in bgImages"
-            :key="i"
-            class="vpk-bg-thumb"
-            :class="{ selected: selectedBgs.includes(img) }"
-            @click="toggleBgSelect(img)"
-          >
-            <img :src="img" alt="" />
-            <span v-if="selectedBgs.includes(img)" class="vpk-bg-check">✓</span>
-          </div>
-        </div>
-        <div class="vpk-bg-dialog-footer">
-          <span class="vpk-bg-selected-tip">已选 {{ selectedBgs.length }} 张</span>
-          <button type="button" class="vpk-btn" @click="cancelBgDialog">取消</button>
-          <button type="button" class="vpk-btn primary" :disabled="!selectedBgs.length" @click="confirmBgDialog">确定</button>
-        </div>
-        <input ref="bgUploadInputRef" type="file" accept="image/*" multiple class="vpk-file-input" @change="onBgUpload" />
-      </div>
-    </div>
+    <BgGalleryDialog :visible="bgDialogVisible" :doc="doc" @confirm="onBgConfirm" @close="bgDialogVisible = false" />
 
     <input ref="imageInputRef" type="file" accept="image/*" class="vpk-file-input" @change="onImageFileChange" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, type CSSProperties, type PropType } from 'vue';
-import { stripRichTextStyle, type PptDocumentModel, type PptElementModel, type PptTableCell, type PptTableElement, type PptTextAlign, type PptTextElement, type RichTextState } from '@vue-ppt-kit/core';
+import { ref, computed, inject, onMounted, onBeforeUnmount, type CSSProperties, type PropType } from 'vue';
+import {
+  ALIGN_ICONS,
+  ALIGN_OPTIONS,
+  EDITOR_EMITTER,
+  FONT_FAMILIES,
+  FONT_SIZES,
+  LINE_HEIGHTS,
+  ORDER_ICONS,
+  ORDER_OPTIONS,
+  RICH_TEXT_COMMAND,
+  RICH_TEXT_STATE,
+  TOOLBAR_ICONS,
+  createImageElement,
+  createTextElement,
+  readFileAsImage,
+  stripRichTextStyle,
+  type EditorEmitter,
+  type PptDocumentModel,
+  type PptElementModel,
+  type PptImageElement,
+  type PptTextAlign,
+  type PptTextElement,
+  type RichTextState,
+} from '@vue-ppt-kit/core';
 import type { useSlides } from './useSlides';
-import { emitter, RICH_TEXT_COMMAND, RICH_TEXT_STATE } from './emitter';
+import { sharedEmitter } from './emitter';
+import ColorPopup from './toolbar/ColorPopup.vue';
+import TablePicker from './toolbar/TablePicker.vue';
+import BgGalleryDialog from './toolbar/BgGalleryDialog.vue';
 
 type SlidesState = ReturnType<typeof useSlides>;
 
@@ -450,6 +356,9 @@ const emit = defineEmits<{
 }>();
 
 const state = computed(() => props.state);
+// 编辑器实例级事件转发器（PptEditor provide 注入）：多编辑器实例互不串扰；
+// 兜底 sharedEmitter 供脱离 PptEditor 树单独使用 Toolbar 的场景
+const emitter = inject<EditorEmitter>(EDITOR_EMITTER, sharedEmitter);
 const selectedEl = computed(() => state.value?.selectedElement.value ?? null);
 const textEl = computed(() => (selectedEl.value && selectedEl.value.type === 'text' ? selectedEl.value : null));
 const isTextSelected = computed(() => !!textEl.value);
@@ -458,7 +367,7 @@ const isEditingText = computed(() => !!selectedEl.value && state.value?.editingE
 
 // 编辑态：编辑器光标处富文本状态回显（点击/选字时更新）
 const richtextState = ref<RichTextState | null>(null);
-// 具名 handler：组件卸载时注销，避免 emitter（模块级单例）持有已卸载组件的引用
+// 具名 handler：组件卸载时注销，避免 emitter 持有已卸载组件的引用
 function onRichTextState(s: RichTextState) {
   richtextState.value = s;
 }
@@ -466,7 +375,11 @@ function onRichTextState(s: RichTextState) {
 // 下拉与色块的显示值：编辑态跟随光标处样式（mark），非编辑态取元素属性
 const displayState = computed(() => ({
   fontName: (isEditingText.value ? richtextState.value?.fontName : textEl.value?.fontFamily) ?? textEl.value?.fontFamily ?? '',
-  fontSize: (isEditingText.value ? richtextState.value?.fontSize : textEl.value?.fontSize && String(textEl.value.fontSize)) ?? '',
+  fontSize: isEditingText.value
+    ? richtextState.value?.fontSize ?? ''
+    : textEl.value?.fontSize
+      ? String(textEl.value.fontSize)
+      : '',
   foreColor: (isEditingText.value ? richtextState.value?.foreColor : textEl.value?.color) ?? '',
   bold: isEditingText.value ? !!richtextState.value?.bold : !!textEl.value?.bold,
   // 斜体/下划线/删除线仅存在于富文本 mark（无元素级属性）：非编辑态恒为 false
@@ -500,33 +413,15 @@ function onFontSizeChange(value: string) {
 
 const activeTab = ref<'home' | 'insert'>('home');
 
+// 工具栏图标：core 以 SVG 文件单源维护（构建时内联为字符串），双端共用
+const ICONS = TOOLBAR_ICONS;
+
 // ==================== 编辑（复制 / 粘贴） ====================
 // 复制：暂存到内部剪贴板（参考 PPTist mainStore clipboard）；粘贴：克隆插入当前页
 
 // ==================== 字体 / 段落 ====================
+// 候选项（字体 / 字号 / 行距 / 对齐 / 排列）由 core 预设共享，双端一致
 
-// 常用系统字体（参考 PPTist availableFonts，仅保留系统字体）
-const fontFamilies = [
-  { label: '微软雅黑', value: '"Microsoft YaHei", sans-serif' },
-  { label: '苹方', value: '"PingFang SC", sans-serif' },
-  { label: '宋体', value: 'SimSun, serif' },
-  { label: '黑体', value: 'SimHei, sans-serif' },
-  { label: '楷体', value: 'KaiTi, serif' },
-  { label: '仿宋', value: 'FangSong, serif' },
-  { label: 'Arial', value: 'Arial, sans-serif' },
-  { label: 'Times New Roman', value: '"Times New Roman", serif' },
-  { label: 'Georgia', value: 'Georgia, serif' },
-  { label: 'Courier New', value: '"Courier New", monospace' },
-];
-// 字号与行距候选项（参考 PPTist TextStylePanel 的 options）
-const fontSizes = [12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 60, 72];
-const lineHeights = [1, 1.15, 1.2, 1.4, 1.5, 1.75, 2, 2.5, 3];
-const alignOptions: { label: string; value: PptTextAlign }[] = [
-  { label: '左对齐', value: 'left' },
-  { label: '居中', value: 'center' },
-  { label: '右对齐', value: 'right' },
-  { label: '两端对齐', value: 'justify' },
-];
 const currentAlign = computed<PptTextAlign>(() => textEl.value?.align ?? 'left');
 
 // 更新选中文本元素的属性
@@ -557,13 +452,6 @@ function onBoldClick() {
   updateText({ text: stripRichTextStyle(el.text, ['font-weight']), bold: !el.bold });
 }
 
-// 预设色板（参考 PPTist ColorPicker 的主题色 + 常用色）
-const palette = [
-  '#000000', '#262626', '#595959', '#8c8c8c', '#bfbfbf', '#d9d9d9', '#f0f0f0', '#ffffff', '#7f2b2b',
-  '#303133', '#606266', '#909399', '#c0c4cc', '#409eff', '#1677ff', '#2f54eb', '#722ed1', '#eb2f96',
-  '#f5222d', '#fa541c', '#fa8c16', '#fadb14', '#a0d911', '#52c41a', '#13c2c2', '#2e8b57', '#8b4513',
-];
-
 const colorAnchor = ref<null | 'fill' | 'fontColor'>(null);
 // 弹层用 fixed 定位（相对视口），避免被工具栏的横向滚动容器裁剪
 const colorPopupStyle = ref<CSSProperties>({});
@@ -577,8 +465,7 @@ function anchorPopupStyle(e: Event, width: number): CSSProperties {
 // 工具栏横向滚动时收起弹层，避免弹层与触发按钮错位
 function closePopups() {
   colorAnchor.value = null;
-  tablePickerVisible.value = false;
-  endCell.value = [];
+  closeTablePicker();
 }
 const currentColor = computed(() => {
   if (colorAnchor.value === 'fill') return textEl.value?.fill || '#ffffff';
@@ -617,19 +504,9 @@ function updatePosition(key: 'x' | 'y' | 'width' | 'height', e: Event) {
 }
 
 // ==================== 排列 ====================
-
-const orderOptions: { label: string; command: 'up' | 'top' | 'down' | 'bottom' }[] = [
-  { label: '上移一层', command: 'up' },
-  { label: '置于顶层', command: 'top' },
-  { label: '下移一层', command: 'down' },
-  { label: '置于底层', command: 'bottom' },
-];
+// 命令候选项由 core 预设共享（ORDER_OPTIONS），层级操作直接调用 useSlides
 
 // ==================== 插入（参考 PPTist CanvasTool 的 add-element-handler） ====================
-
-function genId() {
-  return Math.random().toString(36).slice(2, 10);
-}
 
 // 插入元素统一入口，由编辑器层（PptEditor）写入当前页
 function emitInsert(element: PptElementModel) {
@@ -637,25 +514,7 @@ function emitInsert(element: PptElementModel) {
 }
 
 function insertTextElement() {
-  const width = Math.round(props.doc.width * 0.5);
-  const height = 60;
-  emitInsert({
-    id: genId(),
-    type: 'text',
-    x: Math.round((props.doc.width - width) / 2),
-    y: Math.round((props.doc.height - height) / 2),
-    width,
-    height,
-    text: '请输入文字',
-    fontSize: 20,
-    color: '#303133',
-    // 富文本相关字段带默认值创建（与 vue2 版一致，防御性保证字段齐全）
-    fontFamily: '',
-    bold: false,
-    align: 'left',
-    lineHeight: 1.4,
-    fill: '',
-  });
+  emitInsert(createTextElement(props.doc));
 }
 
 // 图片插入：文件选择 → dataURL → 按原图比例缩放至文档尺寸内并居中
@@ -663,174 +522,41 @@ const imageInputRef = ref<HTMLInputElement>();
 function triggerImagePick() {
   imageInputRef.value?.click();
 }
-function onImageFileChange(e: Event) {
-  readImageFile(e, (src, img) => {
-    // 参考 PPTist createImageElement：按原图比例缩放至文档尺寸内并居中
-    const maxWidth = props.doc.width * 0.6;
-    const maxHeight = props.doc.height * 0.6;
-    const scale = Math.min(1, maxWidth / img.width, maxHeight / img.height);
-    const width = Math.round(img.width * scale);
-    const height = Math.round(img.height * scale);
-    emitInsert({
-      id: genId(),
-      type: 'image',
-      x: Math.round((props.doc.width - width) / 2),
-      y: Math.round((props.doc.height - height) / 2),
-      width,
-      height,
-      src,
-    });
-  });
-}
-
-// 背景图片图库弹窗（参考 WPS/PowerPoint 背景填充库）：
-// 上传本地文件进列表、可多选；确定后按选择顺序逐张插入为底层图片层（可拖动/缩放）
-const bgDialogVisible = ref(false);
-const bgImages = ref<string[]>([]);
-const selectedBgs = ref<string[]>([]);
-const bgUploadInputRef = ref<HTMLInputElement>();
-function openBgDialog() {
-  selectedBgs.value = [];
-  bgDialogVisible.value = true;
-}
-// 多选切换：点击选中，再次点击取消
-function toggleBgSelect(img: string) {
-  const i = selectedBgs.value.indexOf(img);
-  if (i >= 0) selectedBgs.value.splice(i, 1);
-  else selectedBgs.value.push(img);
-}
-// 加载图片原始尺寸
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-// 确定：按选择顺序逐张插入为图片元素并置于底层（逆序处理使先选者位于最底）
-async function confirmBgDialog() {
-  const imgs = selectedBgs.value.slice().reverse();
-  bgDialogVisible.value = false;
-  selectedBgs.value = [];
-  for (const src of imgs) {
-    let img: HTMLImageElement;
-    try {
-      img = await loadImage(src);
-    } catch {
-      continue;
-    }
-    // 参考 PPTist createImageElement：等比缩放至画布内并居中
-    const scale = Math.min(1, props.doc.width / img.width, props.doc.height / img.height);
-    const width = Math.round(img.width * scale);
-    const height = Math.round(img.height * scale);
-    const id = genId();
-    emitInsert({
-      id,
-      type: 'image',
-      x: Math.round((props.doc.width - width) / 2),
-      y: Math.round((props.doc.height - height) / 2),
-      width,
-      height,
-      src,
-    });
-    // 置于底层，作为背景图片层（普通图片元素，可拖动/缩放）
-    state.value?.orderElement(id, 'bottom');
-  }
-}
-// 取消 / 关闭：仅收起弹窗，不插入
-function cancelBgDialog() {
-  bgDialogVisible.value = false;
-}
-function triggerBgUpload() {
-  bgUploadInputRef.value?.click();
-}
-// 上传本地图片（可多张）：追加进图库列表
-function onBgUpload(e: Event) {
-  const input = e.target as HTMLInputElement;
-  const files = Array.from(input.files ?? []);
-  input.value = '';
-  if (!files.length) return;
-  files.forEach((file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      bgImages.value.push(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-// 通用图片文件读取：选择文件 → dataURL → Image 加载完成回调
-function readImageFile(e: Event, onLoaded: (src: string, img: HTMLImageElement) => void) {
+async function onImageFileChange(e: Event) {
   const input = e.target as HTMLInputElement;
   const file = input.files?.[0];
   input.value = '';
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const src = reader.result as string;
-    const img = new Image();
-    img.onload = () => onLoaded(src, img);
-    img.src = src;
-  };
-  reader.readAsDataURL(file);
+  try {
+    const { src, img } = await readFileAsImage(file);
+    emitInsert(createImageElement(src, img, props.doc));
+  } catch {
+    // 文件读取或图片解码失败：忽略，不插入
+  }
 }
 
-// 表格选择器
+// 背景图片图库弹窗（参考 WPS/PowerPoint 背景填充库）：
+// 上传与多选逻辑在 BgGalleryDialog 内，确定后按选择顺序插入为底层图片层（可拖动/缩放）
+const bgDialogVisible = ref(false);
+function openBgDialog() {
+  bgDialogVisible.value = true;
+}
+function onBgConfirm(elements: PptImageElement[]) {
+  for (const el of elements) {
+    emitInsert(el);
+    // 置于底层，作为背景图片层（普通图片元素，可拖动/缩放）
+    state.value?.orderElement(el.id, 'bottom');
+  }
+}
+
+// 表格选择器：网格/自定义行列与元素构造在 TablePicker 内
 const tablePickerVisible = ref(false);
-const endCell = ref<number[]>([]);
-// 自定义行列（参考 PPTist TableGenerator 的自定义模式）
-const isCustom = ref(false);
-const customRow = ref(3);
-const customCol = ref(3);
 function toggleTablePicker(e: Event) {
   tablePickerVisible.value = !tablePickerVisible.value;
-  if (tablePickerVisible.value) {
-    tablePopupStyle.value = anchorPopupStyle(e, 224);
-    isCustom.value = false;
-    endCell.value = [];
-  } else {
-    endCell.value = [];
-  }
+  if (tablePickerVisible.value) tablePopupStyle.value = anchorPopupStyle(e, 224);
 }
-function insertCustomTable() {
-  const row = Math.min(20, Math.max(1, Math.round(customRow.value) || 1));
-  const col = Math.min(20, Math.max(1, Math.round(customCol.value) || 1));
-  insertTableElement(row, col);
-  isCustom.value = false;
-}
-function insertTableElement(row: number, col: number) {
-  const cellWidth = Math.min(100, (props.doc.width * 0.8) / col);
-  const cellHeight = 36;
-  const width = Math.round(cellWidth * col);
-  const height = cellHeight * row;
-  const data: PptTableCell[][] = [];
-  for (let r = 0; r < row; r++) {
-    const rowCells: PptTableCell[] = [];
-    for (let c = 0; c < col; c++) {
-      rowCells.push({ id: genId(), text: '', colspan: 1, rowspan: 1 });
-    }
-    data.push(rowCells);
-  }
-  const table: PptTableElement = {
-    id: genId(),
-    type: 'table',
-    x: Math.round((props.doc.width - width) / 2),
-    y: Math.round((props.doc.height - height) / 2),
-    width,
-    height,
-    data,
-    colWidths: new Array(col).fill(1 / col),
-    outlineColor: '#dcdcdc',
-    headerFill: '#ecf5ff',
-    headerColor: '#409eff',
-    fontSize: 14,
-    color: '#606266',
-  };
+function closeTablePicker() {
   tablePickerVisible.value = false;
-  isCustom.value = false;
-  endCell.value = [];
-  emitInsert(table);
 }
 
 // 点击「打开中的弹层及其触发按钮」之外时收起：
@@ -849,10 +575,7 @@ function onOutsideClick(e: MouseEvent) {
     if (anchor && anchor.contains(target)) return;
   }
   if (colorAnchor.value) colorAnchor.value = null;
-  if (tablePickerVisible.value) {
-    tablePickerVisible.value = false;
-    endCell.value = [];
-  }
+  if (tablePickerVisible.value) closeTablePicker();
 }
 onMounted(() => {
   emitter.on(RICH_TEXT_STATE, onRichTextState);
@@ -922,23 +645,17 @@ onBeforeUnmount(() => {
   align-items: stretch;
   padding: 4px 10px;
   gap: 2px;
-  /* 固定功能行高度：开始/插入两个 tab 内容不同但工具栏总高一致，避免切换时画布抖动 */
-  min-height: 71px;
+  /* 固定功能行高度（开始 tab 的位置 2x2 输入网格为最高项）：开始/插入切换时工具栏总高一致，避免画布抖动 */
+  min-height: 55px;
   box-sizing: border-box;
   flex-shrink: 0;
 }
 .vpk-tool-group {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   gap: 2px;
   padding: 0 6px;
-}
-.vpk-group-label {
-  font-size: 10px;
-  line-height: 14px;
-  color: #909399;
-  text-align: center;
 }
 .vpk-group-items {
   display: flex;
@@ -971,6 +688,20 @@ onBeforeUnmount(() => {
   position: relative;
   display: flex;
 }
+
+/* 图标容器：SVG 字符串经 v-html 内联（不带 scoped 标记），:deep 穿透设置尺寸 */
+.vpk-icon {
+  display: flex;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+.vpk-icon :deep(svg) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .vpk-tool-btn {
   display: flex;
   align-items: center;
@@ -989,12 +720,8 @@ onBeforeUnmount(() => {
   background: #f5f7fa;
   color: var(--vpk-primary, #409eff);
 }
-.vpk-tool-btn svg {
-  width: 15px;
-  height: 15px;
-}
 
-/* 图标按钮（加粗 / 对齐 / 排列 / 复制粘贴等） */
+/* 图标按钮（加粗 / 对齐 / 排列 / 复制粘贴等）：图标统一 20px */
 .vpk-icon-btn {
   display: flex;
   align-items: center;
@@ -1007,7 +734,7 @@ onBeforeUnmount(() => {
   border-radius: 4px;
   color: #606266;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
 }
 .vpk-icon-btn:hover {
   background: #f5f7fa;
@@ -1023,13 +750,9 @@ onBeforeUnmount(() => {
   background: transparent;
   color: #606266;
 }
-.vpk-icon-btn svg {
-  width: 15px;
-  height: 15px;
-}
 .bold-btn {
   font-weight: 800;
-  font-size: 14px;
+  font-size: 15px;
   font-family: Georgia, serif;
 }
 .italic-btn {
@@ -1046,7 +769,7 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-/* 下拉选择 */
+/* 下拉选择：高度与 26px 图标按钮同行对齐 */
 .vpk-select {
   height: 26px;
   padding: 0 4px;
@@ -1101,90 +824,17 @@ onBeforeUnmount(() => {
 .vpk-color-icon {
   position: relative;
   display: flex;
-  width: 15px;
-  height: 15px;
-}
-.vpk-color-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 20px;
+  height: 20px;
 }
 .vpk-color-block {
   position: absolute;
-  left: 3px;
-  right: 3px;
+  left: 4px;
+  right: 4px;
   bottom: 0;
-  height: 4px;
+  height: 5px;
   border: 1px solid rgba(0, 0, 0, 0.15);
   box-sizing: border-box;
-}
-
-/* 颜色弹层：预设色板 + 自定义（参考 PPTist ColorPicker）；fixed 定位避免被滚动容器裁剪 */
-.vpk-color-popup {
-  position: fixed;
-  z-index: 40;
-  /* 9 列色板（9x18px + 8x4px 间距）+ 内边距，宽度精确容纳不溢出 */
-  width: 212px;
-  padding: 8px;
-  background: #fff;
-  border: 1px solid var(--vpk-border, #e4e7ed);
-  border-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-  box-sizing: border-box;
-}
-.vpk-color-swatches {
-  display: grid;
-  grid-template-columns: repeat(9, 18px);
-  gap: 4px;
-}
-.vpk-swatch {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 2px;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-.vpk-swatch:hover {
-  transform: scale(1.12);
-  border-color: var(--vpk-primary, #409eff);
-}
-.vpk-color-custom {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--vpk-border, #ebeef5);
-}
-.vpk-color-custom-label {
-  font-size: 12px;
-  color: #606266;
-}
-.vpk-color-custom input[type='color'] {
-  width: 26px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid #dcdcdc;
-  border-radius: 2px;
-  background: #fff;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-.vpk-color-none {
-  margin-left: auto;
-  height: 22px;
-  padding: 0 8px;
-  font-size: 12px;
-  border: 1px solid #dcdcdc;
-  border-radius: 4px;
-  background: #fff;
-  color: #606266;
-  cursor: pointer;
-}
-.vpk-color-none:hover {
-  color: var(--vpk-primary, #409eff);
-  border-color: var(--vpk-primary, #409eff);
 }
 
 /* 位置：2x2 数字输入 */
@@ -1226,238 +876,5 @@ onBeforeUnmount(() => {
 .vpk-pos-grid input:disabled {
   opacity: 0.35;
   cursor: not-allowed;
-}
-
-/* 背景图片图库弹窗 */
-.vpk-dialog-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.35);
-}
-.vpk-bg-dialog {
-  display: flex;
-  flex-direction: column;
-  width: 640px;
-  max-width: calc(100vw - 48px);
-  height: 420px;
-  max-height: calc(100vh - 96px);
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
-  overflow: hidden;
-}
-.vpk-bg-dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--vpk-border, #ebeef5);
-}
-.vpk-dialog-close {
-  padding: 2px 4px;
-  font-size: 18px;
-  line-height: 1;
-  color: #909399;
-  cursor: pointer;
-}
-.vpk-dialog-close:hover {
-  color: var(--vpk-primary, #409eff);
-}
-/* 图库：上下滑动翻页，已选状态由数据驱动、滚动不丢失 */
-.vpk-bg-gallery {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-content: flex-start;
-  padding: 14px;
-  overflow-y: auto;
-  box-sizing: border-box;
-}
-.vpk-bg-empty {
-  width: 100%;
-  margin-top: 120px;
-  font-size: 13px;
-  color: #909399;
-  text-align: center;
-}
-.vpk-bg-thumb {
-  position: relative;
-  width: 104px;
-  height: 72px;
-  border: 2px solid #dcdfe6;
-  border-radius: 4px;
-  background: #f5f7fa;
-  cursor: pointer;
-  overflow: hidden;
-  box-sizing: border-box;
-  flex-shrink: 0;
-}
-.vpk-bg-thumb img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.vpk-bg-thumb:hover {
-  border-color: var(--vpk-primary, #409eff);
-}
-.vpk-bg-thumb.selected {
-  border-color: var(--vpk-primary, #409eff);
-}
-.vpk-bg-check {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  font-size: 12px;
-  color: #fff;
-  background: var(--vpk-primary, #409eff);
-  border-radius: 50%;
-}
-.vpk-bg-dialog-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  border-top: 1px solid var(--vpk-border, #ebeef5);
-}
-.vpk-bg-selected-tip {
-  margin-right: auto;
-  font-size: 12px;
-  color: #909399;
-}
-
-/* 表格选择器：fixed 定位避免被滚动容器裁剪 */
-.vpk-table-picker {
-  position: fixed;
-  z-index: 30;
-  background: #fff;
-  border: 1px solid var(--vpk-border, #e4e7ed);
-  border-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-  padding: 8px;
-}
-.vpk-table-picker-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 20px;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: #606266;
-}
-.vpk-table-picker-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.vpk-table-picker-toggle {
-  border: none;
-  background: transparent;
-  padding: 0;
-  font-size: 12px;
-  cursor: pointer;
-  color: var(--vpk-primary, #409eff);
-}
-.vpk-table-picker-toggle:hover {
-  text-decoration: underline;
-}
-/* 自定义行列面板（参考 PPTist TableGenerator 自定义模式） */
-.vpk-table-custom {
-  width: 170px;
-}
-.vpk-table-custom-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.vpk-table-custom-row label {
-  flex: 1;
-  font-size: 12px;
-  color: #606266;
-}
-.vpk-table-custom-row input {
-  flex: 1.4;
-  height: 24px;
-  padding: 0 6px;
-  font-size: 12px;
-  border: 1px solid #dcdcdc;
-  border-radius: 4px;
-  box-sizing: border-box;
-  color: #606266;
-}
-.vpk-table-custom-row input:focus {
-  outline: none;
-  border-color: var(--vpk-primary, #409eff);
-}
-.vpk-table-custom-btns {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 2px;
-}
-.vpk-btn {
-  height: 24px;
-  padding: 0 10px;
-  font-size: 12px;
-  background: #fff;
-  border: 1px solid #dcdcdc;
-  border-radius: 4px;
-  color: #606266;
-  cursor: pointer;
-}
-.vpk-btn:hover {
-  color: var(--vpk-primary, #409eff);
-  border-color: var(--vpk-primary, #409eff);
-}
-.vpk-btn.primary {
-  background: var(--vpk-primary, #409eff);
-  border-color: var(--vpk-primary, #409eff);
-  color: #fff;
-}
-.vpk-btn.primary:hover {
-  background: #66b1ff;
-  border-color: #66b1ff;
-  color: #fff;
-}
-.vpk-table-picker-close {
-  cursor: pointer;
-  color: #909399;
-  padding: 0 2px;
-}
-.vpk-table-picker-close:hover {
-  color: var(--vpk-primary, #409eff);
-}
-.vpk-table-picker-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.vpk-picker-row {
-  display: flex;
-  gap: 2px;
-}
-.vpk-picker-cell {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  background: #f5f7fa;
-  border: 1px solid #dcdcdc;
-  border-radius: 2px;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-.vpk-picker-cell.active {
-  background: rgba(64, 158, 255, 0.12);
-  border-color: var(--vpk-primary, #409eff);
 }
 </style>

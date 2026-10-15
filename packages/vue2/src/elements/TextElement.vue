@@ -18,8 +18,17 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { PptTextElement, RichTextState, sanitizeRichText } from '@vue-ppt-kit/core';
-import { emitter, RICH_TEXT_COMMAND, RICH_TEXT_STATE, RichTextCommand } from '../emitter';
+import {
+  EDITOR_EMITTER,
+  RICH_TEXT_COMMAND,
+  RICH_TEXT_STATE,
+  EditorEmitter,
+  RichTextCommand,
+  RichTextState,
+  sanitizeRichText,
+  PptTextElement,
+} from '@vue-ppt-kit/core';
+import { sharedEmitter } from '../emitter';
 import RichEditor from './RichEditor.vue';
 
 // 参考 PPTist TextElement：编辑器常驻，样式分层——
@@ -28,6 +37,10 @@ import RichEditor from './RichEditor.vue';
 export default Vue.extend({
   name: 'PptTextElement',
   components: { RichEditor },
+  // 编辑器实例级事件转发器（PptStage provide 注入）；兜底 sharedEmitter 供独立使用
+  inject: {
+    editorEmitter: { from: EDITOR_EMITTER, default: () => sharedEmitter },
+  },
   props: {
     element: { type: Object as () => PptTextElement, required: true },
     scale: { type: Number, default: 1 },
@@ -36,6 +49,10 @@ export default Vue.extend({
     static: { type: Boolean, default: false },
   },
   computed: {
+    // inject 的转发器（Vue 2 类型系统不将 inject 键并入 this，经 computed 收窄类型）
+    emitter(): EditorEmitter {
+      return ((this as any).editorEmitter as EditorEmitter) || sharedEmitter;
+    },
     // 容器默认样式层：PM 内容继承，元素属性修改实时生效
     containerStyle(): Record<string, string | number> {
       const el = this.element;
@@ -82,7 +99,7 @@ export default Vue.extend({
       this.$emit('commit', payload);
     },
     onSelection(state: RichTextState) {
-      emitter.emit(RICH_TEXT_STATE, state);
+      this.emitter.emit(RICH_TEXT_STATE, state);
     },
     // 工具栏富文本命令（参考 PPTist RICH_TEXT_COMMAND 事件）→ 编辑器执行
     // 仅响应以自身元素为 target 的命令（多实例共存时防误投递）
@@ -93,10 +110,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    emitter.on(RICH_TEXT_COMMAND, this.onRichTextCommand);
+    this.emitter.on(RICH_TEXT_COMMAND, this.onRichTextCommand);
   },
   beforeDestroy() {
-    emitter.off(RICH_TEXT_COMMAND, this.onRichTextCommand);
+    this.emitter.off(RICH_TEXT_COMMAND, this.onRichTextCommand);
   },
 });
 </script>

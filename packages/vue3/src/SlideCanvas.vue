@@ -56,19 +56,18 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, type CSSProperties } from 'vue';
-import type { PptSlideModel, PptElementModel } from '@vue-ppt-kit/core';
+import {
+  adsorb,
+  collectAlignLines,
+  computeResize,
+  SORPTION_RANGE,
+  type AlignLineSet,
+  type AlignLineView,
+  type PptElementModel,
+  type PptSlideModel,
+  type ResizeDirection,
+} from '@vue-ppt-kit/core';
 import { elementComponentMap } from './elements';
-
-type ResizeDirection =
-  | 'LEFT_TOP' | 'TOP' | 'RIGHT_TOP'
-  | 'LEFT' | 'RIGHT'
-  | 'LEFT_BOTTOM' | 'BOTTOM' | 'RIGHT_BOTTOM';
-
-interface AlignLine { value: number; range: [number, number] }
-interface AlignLineView { type: 'h' | 'v'; value: number; range: [number, number] }
-
-const MIN_SIZE = 20;
-const SORPTION_RANGE = 5;
 
 const props = withDefaults(defineProps<{
   slide?: PptSlideModel;
@@ -118,51 +117,9 @@ const selectedOutline = computed(() => ({
   outline: `${1 / props.canvasScale}px dashed var(--vpk-primary, #409eff)`,
 }));
 
-// ==================== 对齐吸附（参考 PPTist useDragElement/useScaleElement） ====================
+// ==================== 对齐吸附（算法在 core/geometry，此处仅做展示与缓存） ====================
 
 const alignLineViews = ref<AlignLineView[]>([]);
-
-function collectAlignLines(excludeId: string) {
-  const h: AlignLine[] = [];
-  const v: AlignLine[] = [];
-  const W = props.width;
-  const H = props.height;
-
-  for (const el of props.slide?.elements ?? []) {
-    if (el.id === excludeId) continue;
-    const l = el.x;
-    const t = el.y;
-    const r = el.x + el.width;
-    const b = el.y + el.height;
-    h.push({ value: t, range: [l, r] }, { value: b, range: [l, r] }, { value: t + el.height / 2, range: [l, r] });
-    v.push({ value: l, range: [t, b] }, { value: r, range: [t, b] }, { value: l + el.width / 2, range: [t, b] });
-  }
-
-  // 画布边界与中心
-  h.push({ value: 0, range: [0, W] }, { value: H, range: [0, W] }, { value: H / 2, range: [0, W] });
-  v.push({ value: 0, range: [0, H] }, { value: W, range: [0, H] }, { value: W / 2, range: [0, H] });
-
-  return { h, v };
-}
-
-// 目标范围（min/max/center）与吸附线比较，返回校正量与展示线
-function adsorb(
-  targetMin: number,
-  targetMax: number,
-  lines: AlignLine[],
-  type: 'h' | 'v'
-): { offset: number; line: AlignLineView } | null {
-  const center = (targetMin + targetMax) / 2;
-  for (const l of lines) {
-    if (Math.abs(targetMin - l.value) < SORPTION_RANGE)
-      return { offset: targetMin - l.value, line: { type, value: l.value, range: l.range } };
-    if (Math.abs(targetMax - l.value) < SORPTION_RANGE)
-      return { offset: targetMax - l.value, line: { type, value: l.value, range: l.range } };
-    if (Math.abs(center - l.value) < SORPTION_RANGE)
-      return { offset: center - l.value, line: { type, value: l.value, range: l.range } };
-  }
-  return null;
-}
 
 function alignLineStyle(l: AlignLineView): CSSProperties {
   const s = props.scale;
@@ -181,6 +138,8 @@ interface DragContext {
   originX: number;
   originY: number;
   isMisoperation: boolean | null;
+  /** mousedown 时收集的吸附线缓存：拖动中其他元素不动，无需每帧重算 */
+  alignLines: AlignLineSet;
 }
 let dragContext: DragContext | null = null;
 
@@ -201,6 +160,7 @@ function onElementMouseDown(el: PptElementModel, e: MouseEvent) {
     originX: el.x,
     originY: el.y,
     isMisoperation: null,
+    alignLines: collectAlignLines(props.slide?.elements ?? [], props.width, props.height, el.id),
   };
   document.addEventListener('mousemove', onDocumentMouseMove);
   document.addEventListener('mouseup', onDocumentMouseUp);
@@ -224,8 +184,8 @@ function onDocumentMouseMove(e: MouseEvent) {
   let x = ctx.originX + moveX;
   let y = ctx.originY + moveY;
 
-  // 吸附：目标位置四边/中心与其他元素及画布对齐
-  const { h, v } = collectAlignLines(ctx.element.id);
+  // 吸附：目标位置四边/中心与其他元素及画布对齐（吸附线已在 mousedown 时缓存）
+  const { h, v } = ctx.alignLines;
   const lines: AlignLineView[] = [];
   const av = adsorb(x, x + ctx.element.width, v, 'v');
   if (av) {
@@ -244,7 +204,6 @@ function onDocumentMouseMove(e: MouseEvent) {
 
 function onDocumentMouseUp() {
   if (!dragContext) return;
-  const el = dragContext.element;
   dragContext = null;
   document.removeEventListener('mousemove', onDocumentMouseMove);
   document.removeEventListener('mouseup', onDocumentMouseUp);
@@ -259,6 +218,8 @@ interface ResizeContext {
   startX: number;
   startY: number;
   origin: { x: number; y: number; width: number; height: number };
+  /** 手柄按下时收集的吸附线缓存 */
+  alignLines: AlignLineSet;
 }
 let resizeContext: ResizeContext | null = null;
 
@@ -299,39 +260,10 @@ function onResizeStart(el: PptElementModel, direction: ResizeDirection, e: Mouse
     startX: e.clientX,
     startY: e.clientY,
     origin: { x: el.x, y: el.y, width: el.width, height: el.height },
+    alignLines: collectAlignLines(props.slide?.elements ?? [], props.width, props.height, el.id),
   };
   document.addEventListener('mousemove', onResizeMouseMove);
   document.addEventListener('mouseup', onResizeMouseUp);
-}
-
-// 按方向计算新位置尺寸：移动边/角时保持对边（对角）不动，最小尺寸钳制
-function computeResize(
-  d: ResizeDirection,
-  o: ResizeContext['origin'],
-  mx: number,
-  my: number
-) {
-  let width = o.width;
-  let height = o.height;
-
-  if (d === 'RIGHT_BOTTOM') { width = o.width + mx; height = o.height + my; }
-  else if (d === 'LEFT_BOTTOM') { width = o.width - mx; height = o.height + my; }
-  else if (d === 'LEFT_TOP') { width = o.width - mx; height = o.height - my; }
-  else if (d === 'RIGHT_TOP') { width = o.width + mx; height = o.height - my; }
-  else if (d === 'LEFT') width = o.width - mx;
-  else if (d === 'RIGHT') width = o.width + mx;
-  else if (d === 'TOP') height = o.height - my;
-  else if (d === 'BOTTOM') height = o.height + my;
-
-  width = Math.max(MIN_SIZE, Math.round(width));
-  height = Math.max(MIN_SIZE, Math.round(height));
-
-  let x = o.x;
-  let y = o.y;
-  if (d === 'LEFT' || d === 'LEFT_TOP' || d === 'LEFT_BOTTOM') x = o.x - (width - o.width);
-  if (d === 'TOP' || d === 'LEFT_TOP' || d === 'RIGHT_TOP') y = o.y - (height - o.height);
-
-  return { x, y, width, height };
 }
 
 function onResizeMouseMove(e: MouseEvent) {
@@ -351,8 +283,8 @@ function onResizeMouseMove(e: MouseEvent) {
     else my = -mx / ratio;
   }
 
-  // 被拖动边吸附（参考 PPTist useScaleElement 的 alignedAdsorption）
-  const { h, v } = collectAlignLines(ctx.element.id);
+  // 被拖动边吸附（参考 PPTist useScaleElement 的 alignedAdsorption；吸附线已缓存）
+  const { h, v } = ctx.alignLines;
   const lines: AlignLineView[] = [];
   if (d.includes('LEFT') || d.includes('RIGHT')) {
     const target = d.includes('LEFT') ? o.x + mx : o.x + o.width + mx;

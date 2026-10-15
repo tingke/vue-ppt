@@ -17,9 +17,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, type CSSProperties } from 'vue';
-import { sanitizeRichText, type PptTextElement, type RichTextState } from '@vue-ppt-kit/core';
-import { emitter, RICH_TEXT_COMMAND, RICH_TEXT_STATE, type RichTextCommand } from '../emitter';
+import { computed, inject, onBeforeUnmount, ref, type CSSProperties } from 'vue';
+import {
+  EDITOR_EMITTER,
+  RICH_TEXT_COMMAND,
+  RICH_TEXT_STATE,
+  type EditorEmitter,
+  type RichTextCommand,
+  type RichTextState,
+  sanitizeRichText,
+  type PptTextElement,
+} from '@vue-ppt-kit/core';
+import { sharedEmitter } from '../emitter';
 import RichEditor from './RichEditor.vue';
 
 // 参考 PPTist TextElement：编辑器常驻，样式分层——
@@ -43,6 +52,9 @@ const emit = defineEmits<{
 }>();
 
 const editorRef = ref<InstanceType<typeof RichEditor>>();
+
+// 编辑器实例级事件转发器（PptEditor provide 注入），兜底 sharedEmitter 供独立使用
+const emitter = inject<EditorEmitter>(EDITOR_EMITTER, sharedEmitter);
 
 // 容器默认样式层：PM 内容继承，元素属性修改实时生效
 const containerStyle = computed<CSSProperties>(() => ({

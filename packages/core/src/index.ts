@@ -102,8 +102,6 @@ export function stripRichTextStyle(html: string, styleProps: string[]): string {
   return doc.body.innerHTML;
 }
 
-export * from './richeditor';
-
 /** Placeholder API. A real implementation must unzip and parse OOXML relationships. */
 export async function parsePptx(_source: ArrayBuffer | Blob | string): Promise<PptDocumentModel> {
   throw new Error('parsePptx is not implemented yet. Add ZIP/OOXML parsing before using real PPTX files.');
@@ -165,3 +163,12 @@ export function sanitizeRichText(html: string): string {
 export function createEmptyDocument(): PptDocumentModel {
   return { width: 960, height: 540, slides: [], warnings: [] };
 }
+
+// ==================== 双端共享模块 ====================
+
+export * from './emitter';
+export * from './presets';
+export * from './factory';
+export * from './geometry';
+export * from './richeditor';
+export * from './icons';

@@ -44,6 +44,11 @@ onMounted(() => {
     onEscape: (payload) => emit('escape', payload),
     onSelectionChange: (state) => emit('selection', state),
   });
+  // 挂载即回写实测内容高度：新增文本的工厂默认高度（如 60）通常不等于
+  // 编辑器内容实际高度，不同步会导致 vpk-text-view 与 vpk-rich-editor
+  // 高度不一致、首次编辑（300ms 防抖回写）时盒子跳变
+  // （参考 PPTist TextElement 的 ResizeObserver 挂载即同步高度）
+  emit('input', { text: props.value, height: editor.measureHeight() });
 });
 
 onBeforeUnmount(() => {
