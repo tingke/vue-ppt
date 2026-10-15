@@ -1,25 +1,28 @@
 <template>
-  <textarea
-    v-if="editing"
-    ref="taRef"
-    v-model="draft"
-    rows="1"
-    class="vpk-text-editor"
-    :style="editorStyle"
-    @input="onInput"
-    @blur="commit"
-    @keydown.esc.prevent="commit"
-    @mousedown.stop
-  ></textarea>
-  <span v-else :style="textStyle">{{ element.text }}</span>
+  <!-- 常驻 ProseMirror 编辑器：editable 切换可编辑（无 v-if 销毁重建，参考 PPTist TextElement） -->
+  <div ref="containerRef" class="vpk-text-view" :style="containerStyle" @mousedown="onMouseDown">
+    <RichEditor
+      ref="editorRef"
+      :value="element.text"
+      :editable="editing"
+      :scale="scale"
+      @input="onInput"
+      @blur="commit"
+      @escape="commit"
+      @selection="onSelection"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch, type CSSProperties } from 'vue';
-import type { PptTextElement } from '@vue-ppt-kit/core';
+import { computed, onBeforeUnmount, ref, type CSSProperties } from 'vue';
+import type { PptTextElement, RichTextState } from '@vue-ppt-kit/core';
+import { emitter, RICH_TEXT_COMMAND, RICH_TEXT_STATE, type RichTextCommand } from '../emitter';
+import RichEditor from './RichEditor.vue';
 
-// 参考 PPTist TextElement：静态时纯渲染，editing 时切换为可编辑输入区
-// （PPTist 用 ProseMirror 富文本，这里简化为 textarea 覆盖层）
+// 参考 PPTist TextElement：编辑器常驻，样式分层——
+// 元素级属性（字号/颜色/字体/行距/对齐/填充）作为容器默认样式，
+// 富文本 mark 只记录差异部分，二者天然不冲突
 const props = withDefaults(defineProps<{
   element: PptTextElement;
   scale?: number;
@@ -34,71 +37,60 @@ const emit = defineEmits<{
   (e: 'update', payload: { text: string; height: number }): void;
 }>();
 
-const taRef = ref<HTMLTextAreaElement>();
-const draft = ref(props.element.text);
+const editorRef = ref<InstanceType<typeof RichEditor>>();
 
-watch(() => props.editing, (v) => {
-  if (!v) return;
-  draft.value = props.element.text;
-  nextTick(() => {
-    syncHeight();
-    taRef.value?.focus();
-    taRef.value?.select();
-  });
-});
-
-const textStyle = computed<CSSProperties>(() => ({
+// 容器默认样式层：PM 内容继承，元素属性修改实时生效
+const containerStyle = computed<CSSProperties>(() => ({
   fontSize: `${(props.element.fontSize ?? 16) * props.scale}px`,
   color: props.element.color ?? '#303133',
-  lineHeight: 1.4,
-  whiteSpace: 'pre-wrap',
+  fontFamily: props.element.fontFamily || 'inherit',
+  fontWeight: props.element.bold ? 'bold' : 'normal',
+  // 行距缺省 1.4，与历史渲染保持一致
+  lineHeight: props.element.lineHeight ?? 1.4,
+  textAlign: props.element.align ?? 'left',
+  // 文本框填充：铺满元素盒（空字符串 / 缺省为透明）
+  background: props.element.fill || 'transparent',
+  width: '100%',
+  height: '100%',
+  boxSizing: 'border-box',
   wordBreak: 'break-word',
 }));
 
-const editorStyle = computed<CSSProperties>(() => ({
-  ...textStyle.value,
-  width: '100%',
-  height: 'auto',
-  margin: 0,
-  padding: 0,
-  border: 'none',
-  outline: 'none',
-  background: 'transparent',
-  resize: 'none',
-  overflow: 'hidden',
-  display: 'block',
-  fontFamily: 'inherit',
-  cursor: 'text',
-}));
-
-// 让 textarea 高度跟随内容（避免打字时内容被裁剪、显示不同步），返回文档单位高度
-function syncHeight(): number {
-  const ta = taRef.value;
-  if (!ta) return props.element.height;
-  ta.style.height = 'auto';
-  const px = ta.scrollHeight;
-  ta.style.height = `${px}px`;
-  return Math.max(Math.round(px / props.scale), MIN_TEXT_HEIGHT);
+// 编辑态阻止 mousedown 冒泡（避免触发元素拖拽）；非编辑态放行给画布拖拽
+function onMouseDown(e: MouseEvent) {
+  if (props.editing) e.stopPropagation();
 }
 
-// 输入过程中实时同步内容与高度（参考 PPTist 编辑器实时写回 store）
-function onInput() {
-  const height = syncHeight();
-  emit('update', { text: draft.value, height });
+// 输入（300ms 防抖）/命令后回写：内容与高度实时同步到 store
+function onInput(payload: { text: string; height: number }) {
+  emit('update', payload);
 }
 
-// 提交内容；高度按内容真实高度回写（临时置 auto 以测量可收缩高度）
-function commit() {
+// 提交内容（blur / Escape）；空文本由编辑器层删除（checkEmptyText 语义）
+function commit(payload: { text: string; height: number }) {
   if (!props.editing) return;
-  const height = syncHeight();
-  emit('commit', { text: draft.value, height });
+  emit('commit', payload);
 }
 
-const MIN_TEXT_HEIGHT = 24;
+// 编辑中光标状态回显给工具栏（加粗高亮、字号/字体/颜色跟随光标处样式）
+function onSelection(state: RichTextState) {
+  emitter.emit(RICH_TEXT_STATE, state);
+}
+
+// 工具栏富文本命令（参考 PPTist RICH_TEXT_COMMAND 事件）→ 编辑器执行
+function onRichTextCommand(payload: RichTextCommand) {
+  if (!props.editing) return;
+  editorRef.value?.execCommand(payload);
+}
+
+emitter.on(RICH_TEXT_COMMAND, onRichTextCommand);
+onBeforeUnmount(() => {
+  emitter.off(RICH_TEXT_COMMAND, onRichTextCommand);
+});
 </script>
 
 <style scoped>
-.vpk-text-editor {
-  box-sizing: border-box;
+.vpk-text-view :deep(p) {
+  margin: 0;
 }
 </style>
