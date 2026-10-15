@@ -38,13 +38,13 @@ export const TOOLBAR_ICONS = {
   table: iconTable,
   /** 幻灯片（新建幻灯片） */
   slide: iconSlide,
-  /** 左对齐：三行横线左端对齐，中行最长 */
+  /** 左对齐 */
   alignLeft: iconAlignLeft,
-  /** 居中：三行横线中线对称，中行最长 */
+  /** 居中 */
   alignCenter: iconAlignCenter,
-  /** 右对齐：三行横线右端对齐，中行最长 */
+  /** 右对齐 */
   alignRight: iconAlignRight,
-  /** 两端对齐：三行横线全部全宽 */
+  /** 两端对齐 */
   alignJustify: iconAlignJustify,
   /** 上移一层 */
   orderUp: iconOrderUp,
