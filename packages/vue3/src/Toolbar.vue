@@ -433,7 +433,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, type CSSProperties, type PropType } from 'vue';
-import { sanitizeRichText, stripRichTextStyle, type PptDocumentModel, type PptElementModel, type PptTableCell, type PptTableElement, type PptTextAlign, type PptTextElement, type RichTextState } from '@vue-ppt-kit/core';
+import { stripRichTextStyle, type PptDocumentModel, type PptElementModel, type PptTableCell, type PptTableElement, type PptTextAlign, type PptTextElement, type RichTextState } from '@vue-ppt-kit/core';
 import type { useSlides } from './useSlides';
 import { emitter, RICH_TEXT_COMMAND, RICH_TEXT_STATE } from './emitter';
 
@@ -458,7 +458,10 @@ const isEditingText = computed(() => !!selectedEl.value && state.value?.editingE
 
 // 编辑态：编辑器光标处富文本状态回显（点击/选字时更新）
 const richtextState = ref<RichTextState | null>(null);
-emitter.on<RichTextState>(RICH_TEXT_STATE, (s) => { richtextState.value = s; });
+// 具名 handler：组件卸载时注销，避免 emitter（模块级单例）持有已卸载组件的引用
+function onRichTextState(s: RichTextState) {
+  richtextState.value = s;
+}
 
 // 下拉与色块的显示值：编辑态跟随光标处样式（mark），非编辑态取元素属性
 const displayState = computed(() => ({
@@ -466,21 +469,33 @@ const displayState = computed(() => ({
   fontSize: (isEditingText.value ? richtextState.value?.fontSize : textEl.value?.fontSize && String(textEl.value.fontSize)) ?? '',
   foreColor: (isEditingText.value ? richtextState.value?.foreColor : textEl.value?.color) ?? '',
   bold: isEditingText.value ? !!richtextState.value?.bold : !!textEl.value?.bold,
-  italic: !!richtextState.value?.italic,
-  underline: !!richtextState.value?.underline,
-  strikeThrough: !!richtextState.value?.strikeThrough,
+  // 斜体/下划线/删除线仅存在于富文本 mark（无元素级属性）：非编辑态恒为 false
+  italic: isEditingText.value ? !!richtextState.value?.italic : false,
+  underline: isEditingText.value ? !!richtextState.value?.underline : false,
+  strikeThrough: isEditingText.value ? !!richtextState.value?.strikeThrough : false,
 }));
 
 // 字体：编辑态作用于选中文字（富文本 mark），非编辑态作用于整元素
+// 非编辑态先清除内联 font-family，避免已富文本设置的内联样式压过元素级属性
 function onFontNameChange(value: string) {
-  if (isEditingText.value) execRichText('fontName', value || undefined);
-  else updateText({ fontFamily: value || undefined });
+  if (isEditingText.value) {
+    execRichText('fontName', value || undefined);
+    return;
+  }
+  const el = textEl.value;
+  if (!el) return;
+  updateText({ text: stripRichTextStyle(el.text, ['font-family']), fontFamily: value || undefined });
 }
 
-// 字号：编辑态选区级字号 mark，非编辑态元素级字号
+// 字号：编辑态选区级字号 mark，非编辑态元素级字号（同样先清内联 font-size）
 function onFontSizeChange(value: string) {
-  if (isEditingText.value) execRichText('fontSize', value || undefined);
-  else updateText({ fontSize: Number(value) || undefined });
+  if (isEditingText.value) {
+    execRichText('fontSize', value || undefined);
+    return;
+  }
+  const el = textEl.value;
+  if (!el) return;
+  updateText({ text: stripRichTextStyle(el.text, ['font-size']), fontSize: Number(value) || undefined });
 }
 
 const activeTab = ref<'home' | 'insert'>('home');
@@ -522,9 +537,12 @@ function updateText(patch: Partial<PptTextElement>) {
 }
 
 // 富文本命令：编辑态下作用于选中文字（参考 PPTist RICH_TEXT_COMMAND 事件）
+// 携带 target（元素 id），编辑器侧仅响应自身元素，防止命令误投递
 // @mousedown.prevent 于模板上保持编辑区焦点与选区
 function execRichText(command: string, value?: string) {
-  emitter.emit(RICH_TEXT_COMMAND, { command, value });
+  const el = textEl.value;
+  if (!el) return;
+  emitter.emit(RICH_TEXT_COMMAND, { command, value, target: el.id });
 }
 
 // 加粗：编辑态富文本命令；非编辑态清除内联字重后切换整元素加粗
@@ -836,8 +854,14 @@ function onOutsideClick(e: MouseEvent) {
     endCell.value = [];
   }
 }
-onMounted(() => document.addEventListener('mousedown', onOutsideClick, true));
-onBeforeUnmount(() => document.removeEventListener('mousedown', onOutsideClick, true));
+onMounted(() => {
+  emitter.on(RICH_TEXT_STATE, onRichTextState);
+  document.addEventListener('mousedown', onOutsideClick, true);
+});
+onBeforeUnmount(() => {
+  emitter.off(RICH_TEXT_STATE, onRichTextState);
+  document.removeEventListener('mousedown', onOutsideClick, true);
+});
 </script>
 
 <style scoped>

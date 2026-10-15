@@ -5,7 +5,8 @@
  */
 import { RichTextAction, RichTextState } from '@vue-ppt-kit/core';
 
-export type RichTextCommand = RichTextAction;
+/** 富文本命令：target 为目标元素 id，编辑器侧仅响应自身元素 */
+export type RichTextCommand = RichTextAction & { target?: string };
 export type { RichTextState };
 
 type Handler<T> = (payload: T) => void;

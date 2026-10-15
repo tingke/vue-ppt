@@ -76,4 +76,9 @@ defineExpose({ execCommand });
 .vpk-rich-editor {
   cursor: text;
 }
+/* PM 编辑区按 DOM 换行符与空白渲染（换行/连续空格不塌陷），长词可断行 */
+.vpk-rich-editor :deep(.ProseMirror) {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
 </style>

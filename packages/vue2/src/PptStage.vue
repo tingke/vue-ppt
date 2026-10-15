@@ -112,8 +112,11 @@ export default Vue.extend({
     // ==================== 元素交互事件（坐标换算已在 SlideCanvas 内完成） ====================
 
     const onSelectElement = (el: PptElementModel | null) => {
+      const prevId = state.selectedElementId.value;
       state.selectedElementId.value = el ? el.id : '';
-      if (!el) state.editingElementId.value = '';
+      // 选中切换（含点击空白）时退出文本编辑：编辑态 blur 只回写不退出，
+      // 退出编辑仅由选中切换 / 点击空白 / Escape 触发（PPTist 同款交互模型）
+      if (!el || el.id !== prevId) state.editingElementId.value = '';
     };
 
     const onElementDragMove = (payload: { id: string; x: number; y: number }) => {

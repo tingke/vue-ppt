@@ -193,4 +193,3 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
 }
 
 export default useSlides;
-Vue; // keep Vue import for typings

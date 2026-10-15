@@ -1,4 +1,3 @@
-import Vue from 'vue';
 import { ref, computed, watch, onMounted, onUnmounted, Ref } from '@vue/composition-api';
 
 // 参考 PPTist useScaleCanvas：百分比驱动缩放，30% ~ 200%，步长 5
@@ -129,4 +128,3 @@ export function useCanvasScale(
 }
 
 export default useCanvasScale;
-Vue; // keep Vue import for typings

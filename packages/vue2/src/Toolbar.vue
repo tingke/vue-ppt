@@ -478,9 +478,10 @@ export default Vue.extend({
         fontSize: (isEditing ? rt && rt.fontSize : el && el.fontSize && String(el.fontSize)) || '',
         foreColor: (isEditing ? rt && rt.foreColor : el && el.color) || '',
         bold: isEditing ? !!(rt && rt.bold) : !!(el && el.bold),
-        italic: !!(rt && rt.italic),
-        underline: !!(rt && rt.underline),
-        strikeThrough: !!(rt && rt.strikeThrough),
+        // 斜体/下划线/删除线仅存在于富文本 mark（无元素级属性）：非编辑态恒为 false
+        italic: isEditing ? !!(rt && rt.italic) : false,
+        underline: isEditing ? !!(rt && rt.underline) : false,
+        strikeThrough: isEditing ? !!(rt && rt.strikeThrough) : false,
       };
     },
     hasClipboard(): boolean {
@@ -549,23 +550,37 @@ export default Vue.extend({
       this.state.updateElement(el.id, patch);
     },
     // 富文本命令：编辑态下作用于选中文字（参考 PPTist RICH_TEXT_COMMAND 事件）
+    // 携带 target（元素 id），编辑器侧仅响应自身元素，防止命令误投递
     // 模板上 @mousedown.prevent 保持编辑区焦点与选区
     execRichText(command: string, value?: string) {
-      emitter.emit(RICH_TEXT_COMMAND, { command, value } as RichTextCommand);
+      const el = this.textEl;
+      if (!el) return;
+      emitter.emit(RICH_TEXT_COMMAND, { command, value, target: el.id } as RichTextCommand);
     },
     // 编辑态光标状态回显（编辑器 selection 事件 → 工具栏按钮/下拉）
     onRichtextState(state: RichTextState) {
       this.richtextState = state;
     },
     // 字体：编辑态作用于选中文字（富文本 mark），非编辑态作用于整元素
+    // 非编辑态先清除内联 font-family，避免已富文本设置的内联样式压过元素级属性
     onFontNameChange(value: string) {
-      if (this.isEditingText) this.execRichText('fontName', value || undefined);
-      else this.updateText({ fontFamily: value || undefined });
+      if (this.isEditingText) {
+        this.execRichText('fontName', value || undefined);
+        return;
+      }
+      const el = this.textEl;
+      if (!el) return;
+      this.updateText({ text: stripRichTextStyle(el.text, ['font-family']), fontFamily: value || undefined });
     },
-    // 字号：编辑态选区级字号 mark，非编辑态元素级字号
+    // 字号：编辑态选区级字号 mark，非编辑态元素级字号（同样先清内联 font-size）
     onFontSizeChange(value: string) {
-      if (this.isEditingText) this.execRichText('fontSize', value || undefined);
-      else this.updateText({ fontSize: Number(value) || undefined });
+      if (this.isEditingText) {
+        this.execRichText('fontSize', value || undefined);
+        return;
+      }
+      const el = this.textEl;
+      if (!el) return;
+      this.updateText({ text: stripRichTextStyle(el.text, ['font-size']), fontSize: Number(value) || undefined });
     },
     // 加粗：编辑态富文本命令；非编辑态清除内联字重后切换整元素加粗
     // （否则已富文本加粗的内联 span 会压过元素级 bold，表现为"点了没变化"）

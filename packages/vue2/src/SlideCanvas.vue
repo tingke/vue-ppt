@@ -24,6 +24,7 @@
           :element="el"
           :scale="scale"
           :editing="el.id === editingId"
+          :static="el.type === 'text' ? static : undefined"
           @commit="onTextCommit(el, $event)"
           @update="onTextUpdate(el, $event)"
         />
