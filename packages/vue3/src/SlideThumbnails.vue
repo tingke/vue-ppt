@@ -102,12 +102,12 @@ const menuItems = computed<MenuItem[]>(() => {
   }
   const index = menu.targetIndex;
   const onlyOne = props.doc.slides.length <= 1;
-  return [
-    { text: '复制页面', subText: 'Ctrl + D', handler: (i: number) => emit('copy', i) },
-      { text: '删除页面', subText: 'Delete', disabled: onlyOne, handler: (i: number) => emit('remove', i) },
-      { divider: true },
+  const items: MenuItem[] = [
     { text: '新建页面', subText: 'Enter', handler: () => emit('create') },
-  ].map((item) => ({ ...item, handler: item.handler ? () => item.handler!(index) : undefined })) as MenuItem[];
+    { text: '复制页面', subText: 'Ctrl + D', handler: (i: number) => emit('copy', i) },
+    { text: '删除页面', subText: 'Delete', disabled: onlyOne, handler: (i: number) => emit('remove', i) },
+  ];
+  return items.map((item) => ({ ...item, handler: item.handler ? () => item.handler!(index) : undefined })) as MenuItem[];
 });
 
 function openMenu(e: MouseEvent, type: 'item' | 'blank', index = -1) {

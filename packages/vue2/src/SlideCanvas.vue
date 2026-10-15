@@ -1,7 +1,10 @@
 <template>
   <div
     class="vpk-canvas"
-    :style="{ width: width * scale + 'px', height: height * scale + 'px' }"
+    :style="{
+      width: width * scale + 'px',
+      height: height * scale + 'px',
+    }"
     @mousedown="onCanvasMouseDown"
   >
     <template v-if="slide">
@@ -13,6 +16,7 @@
         :style="[elementStyle(el), el.id === selectedId ? selectedOutline : null]"
         @mousedown="onElementMouseDown(el, $event)"
         @dblclick="onElementDblClick(el)"
+        @contextmenu.stop.prevent="onElementContextMenu(el, $event)"
       >
         <component
           v-if="elementComponentMap[el.type]"
@@ -369,6 +373,13 @@ export default Vue.extend({
       this.$emit('edit-text', el);
     },
 
+    // 元素右键：先选中再抛给编辑器打开上下文菜单（参考 PPTist EditableElement contextmenus）
+    onElementContextMenu(el: PptElementModel, e: MouseEvent) {
+      if (this.static) return;
+      this.$emit('select', el);
+      this.$emit('element-contextmenu', { element: el, x: e.clientX, y: e.clientY });
+    },
+
     onTextCommit(el: PptElementModel, payload: { text: string; height: number }) {
       this.$emit('update-text', { id: el.id, text: payload.text, height: payload.height });
     },
@@ -401,12 +412,18 @@ export default Vue.extend({
   box-sizing: border-box;
 }
 
+/* 对齐吸附线：虚线样式（与选中框一致） */
 .vpk-align-line {
   position: absolute;
   z-index: 3;
-  background: var(--vpk-primary, #409eff);
   pointer-events: none;
 }
-.vpk-align-line.h { height: 1px; }
-.vpk-align-line.v { width: 1px; }
+.vpk-align-line.h {
+  height: 1px;
+  background: repeating-linear-gradient(to right, #409eff 0 4px, transparent 4px 8px);
+}
+.vpk-align-line.v {
+  width: 1px;
+  background: repeating-linear-gradient(to bottom, #409eff 0 4px, transparent 4px 8px);
+}
 </style>

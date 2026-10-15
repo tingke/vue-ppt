@@ -96,10 +96,9 @@ export default Vue.extend({
       const index = this.menu.targetIndex;
       const onlyOne = this.doc.slides.length <= 1;
       const items: MenuItem[] = [
+        { text: '新建页面', subText: 'Enter', handler: (i) => this.$emit('create') },
         { text: '复制页面', subText: 'Ctrl + D', handler: (i) => this.$emit('copy', i) },
         { text: '删除页面', subText: 'Delete', disabled: onlyOne, handler: (i) => this.$emit('remove', i) },
-        { divider: true },
-        { text: '新建页面', subText: 'Enter', handler: () => this.$emit('create') },
       ];
       return items.map((item) =>
         item.handler ? { ...item, handler: () => item.handler!(index) } : item
@@ -138,7 +137,8 @@ export default Vue.extend({
       this.menu.visible = true;
       this.menu.x = e.clientX;
       this.menu.y = e.clientY;
-      this.menu.targetIndex = type === 'item' ? index || -1 : -1;
+      // 注意不能写 index || -1：第一页 index 为 0 是 falsy，会被误判成空白区域
+      this.menu.targetIndex = type === 'item' ? (index ?? -1) : -1;
     },
     closeMenu() {
       this.menu.visible = false;
