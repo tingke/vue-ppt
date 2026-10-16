@@ -1,6 +1,7 @@
 {
   "name": "@tthappy/ppt-vue2",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "publishConfig": { "access": "public" },
   "main": "./dist/vue-ppt-vue2.common.js",
   "module": "./dist/vue-ppt-vue2.common.js",
   "types": "./types/index.d.ts",
@@ -12,8 +13,11 @@
     "build": "vue-cli-service build --target lib --name vue-ppt-vue2 src/index.ts"
   },
   "peerDependencies": {
-    "@vue/composition-api": "^1.7.2",
-    "vue": "^2.6.14"
+    "vue": ">=2.6.14 <3",
+    "@vue/composition-api": "^1.7.4"
+  },
+  "peerDependenciesMeta": {
+    "@vue/composition-api": { "optional": true }
   },
   "devDependencies": {
     "@babel/core": "^8.0.7",
