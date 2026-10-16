@@ -6,7 +6,7 @@
       <div v-else class="vpk-media-placeholder" :class="{ 'has-option': hasOption }" :style="placeholderStyle">{{ placeholderText }}</div>
     </div>
   </div>
-  <!-- 交互渲染：点击占位/已选文案弹出级联选择照片（面板水平居中于图片，位于图片下方） -->
+  <!-- 交互渲染：点击占位/已选文案弹出级联选择照片（面板水平居中于图片中央） -->
   <div v-else class="vpk-media-view" :style="layoutStyle">
     <div class="vpk-media-image" :style="{ height: `${imageHeight}px` }">
       <img v-if="element.src" :src="element.src" alt="" />

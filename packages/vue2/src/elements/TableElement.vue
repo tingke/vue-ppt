@@ -85,7 +85,7 @@ export default Vue.extend({
     },
   },
   beforeDestroy() {
-    document.removeEventListener('mousedown', this.onDocMouseDown);
+    document.removeEventListener('mousedown', this.onDocMouseDown, true);
   },
   methods: {
     // vue2 模板无法直接访问导入绑定：白名单过滤挂 methods 供模板 v-html 使用
@@ -105,7 +105,10 @@ export default Vue.extend({
       return !!this.editingCell && this.editingCell.r === r && this.editingCell.c === c;
     },
 
-    // 编辑器伪元素：id 取 cell.id（防富文本命令误投递），样式取表格级属性（表头行用表头色）
+    // 编辑器伪元素：id 取 cell.id（防富文本命令误投递），样式取表格级属性（表头行用表头色）。
+    // 已知取舍：正因 target 为 cell.id ≠ 表格 id，工具栏富文本命令（字体/字号/颜色/加粗）
+    // 对单元格编辑不生效，单元格内仅 Mod+B/I/U 等编辑器快捷键可用；
+    // 打通需将「当前编辑单元格」提升为编辑器级状态（后续版本跟进）
     cellBase(cell: PptTableCell, row: number) {
       const el = this.element;
       const isHeader = row === 0 && el.headerFill;
@@ -146,7 +149,8 @@ export default Vue.extend({
     onCellDblClick(r: number, c: number) {
       if (this.static) return;
       this.editingCell = { r, c };
-      document.addEventListener('mousedown', this.onDocMouseDown);
+      // 捕获阶段监听：画布元素 mousedown 有 stopPropagation，冒泡阶段到不了 document
+      document.addEventListener('mousedown', this.onDocMouseDown, true);
       this.$nextTick(this.focusCellEditor);
     },
 
@@ -192,7 +196,7 @@ export default Vue.extend({
 
     exitCell() {
       this.editingCell = null;
-      document.removeEventListener('mousedown', this.onDocMouseDown);
+      document.removeEventListener('mousedown', this.onDocMouseDown, true);
     },
   },
 });

@@ -96,7 +96,10 @@ function isEditingCell(r: number, c: number) {
   return !!editingCell.value && editingCell.value.r === r && editingCell.value.c === c;
 }
 
-// 编辑器伪元素：id 取 cell.id（防富文本命令误投递），样式取表格级属性（表头行用表头色）
+// 编辑器伪元素：id 取 cell.id（防富文本命令误投递），样式取表格级属性（表头行用表头色）。
+// 已知取舍：正因 target 为 cell.id ≠ 表格 id，工具栏富文本命令（字体/字号/颜色/加粗）
+// 对单元格编辑不生效，单元格内仅 Mod+B/I/U 等编辑器快捷键可用；
+// 打通需将「当前编辑单元格」提升为编辑器级状态（后续版本跟进）
 function cellBase(cell: PptTableCell, row: number) {
   const el = props.element;
   const isHeader = row === 0 && el.headerFill;
@@ -137,7 +140,8 @@ function onRootMouseDown(e: MouseEvent) {
 function onCellDblClick(r: number, c: number) {
   if (props.static) return;
   editingCell.value = { r, c };
-  document.addEventListener('mousedown', onDocMouseDown);
+  // 捕获阶段监听：画布元素 mousedown 有 stopPropagation，冒泡阶段到不了 document
+  document.addEventListener('mousedown', onDocMouseDown, true);
   nextTick(focusCellEditor);
 }
 
@@ -184,11 +188,11 @@ function onDocMouseDown(e: MouseEvent) {
 
 function exitCell() {
   editingCell.value = null;
-  document.removeEventListener('mousedown', onDocMouseDown);
+  document.removeEventListener('mousedown', onDocMouseDown, true);
 }
 
 onBeforeUnmount(() => {
-  document.removeEventListener('mousedown', onDocMouseDown);
+  document.removeEventListener('mousedown', onDocMouseDown, true);
 });
 </script>
 

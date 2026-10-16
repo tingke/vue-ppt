@@ -96,11 +96,12 @@ export default Vue.extend({
     // 挂到 body：画布 viewport 带 transform:scale，fixed 弹层在其内会相对缩放容器定位导致跑偏
     // （Vue 2 无 Teleport，手动搬移 DOM；事件绑定在元素上，搬移不影响）
     document.body.appendChild(this.$el);
-    document.addEventListener('mousedown', this.onGlobalMouseDown);
+    // 捕获阶段监听：画布元素 mousedown 有 stopPropagation，冒泡阶段到不了 document
+    document.addEventListener('mousedown', this.onGlobalMouseDown, true);
     this.updatePanelLeft();
   },
   beforeDestroy() {
-    document.removeEventListener('mousedown', this.onGlobalMouseDown);
+    document.removeEventListener('mousedown', this.onGlobalMouseDown, true);
     if (this.$el && this.$el.parentNode) this.$el.parentNode.removeChild(this.$el);
   },
   methods: {

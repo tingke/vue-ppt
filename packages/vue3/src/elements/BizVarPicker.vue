@@ -159,10 +159,11 @@ function onGlobalMouseDown(e: MouseEvent) {
 }
 
 onMounted(() => {
-  document.addEventListener('mousedown', onGlobalMouseDown);
+  // 捕获阶段监听：画布元素 mousedown 有 stopPropagation，冒泡阶段到不了 document
+  document.addEventListener('mousedown', onGlobalMouseDown, true);
   updatePanelLeft();
 });
-onBeforeUnmount(() => document.removeEventListener('mousedown', onGlobalMouseDown));
+onBeforeUnmount(() => document.removeEventListener('mousedown', onGlobalMouseDown, true));
 </script>
 
 <style scoped>
