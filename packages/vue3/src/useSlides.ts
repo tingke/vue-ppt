@@ -1,12 +1,22 @@
 import { reactive, computed } from 'vue';
 import { createEmptyDocument, genId, type PptDocumentModel, type PptSlideModel, type PptElementModel, type PptSlideType } from '@vue-ppt-kit/core';
 
+// 元素 / 页面深拷贝：doc 为 reactive Proxy，structuredClone 无法克隆（DataCloneError），
+// 统一走 JSON 序列化（元素模型字段均为 JSON 兼容类型，vue2 端同款实现）
+function deepClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 export function useSlides(options?: { document?: PptDocumentModel }) {
+  // 外部传入的文档深拷贝后接管：编辑原地 mutate 调用方对象会造成双向渗透
+  // （与 vue2 端行为对齐；元素模型字段均 JSON 兼容）
   const doc = reactive<PptDocumentModel>(
-    options?.document ?? {
-      ...createEmptyDocument(),
-      slides: [{ id: genId(), elements: [] }],
-    }
+    options?.document
+      ? deepClone(options.document)
+      : {
+          ...createEmptyDocument(),
+          slides: [{ id: genId(), elements: [] }],
+        }
   );
 
   const slideIndex = reactive({ value: 0 });
@@ -15,6 +25,18 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
   // 选中 / 编辑态（参考 PPTist store 的 activeElementIdList 简化为单选）
   const selectedElementId = reactive({ value: '' });
   const editingElementId = reactive({ value: '' });
+
+  // 编辑辅助 UI：标尺 / 参考线显隐与参考线位置（编辑器级状态，不进文档数据；
+  // Toolbar 与画布容器（PptEditor/PptStage）经 state 共享）
+  const showRuler = reactive({ value: false });
+  const showGuides = reactive({ value: false });
+  // 参考线位置（文档坐标）：x 为垂直线位置、y 为水平线位置，缺省居中
+  const guides = reactive({
+    value: {
+      x: Math.round(doc.width / 2),
+      y: Math.round(doc.height / 2),
+    },
+  });
 
   // 当前选中元素
   const selectedElement = computed<PptElementModel | null>(() => {
@@ -41,7 +63,7 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
   function copySlide(index?: number) {
     const i = index ?? slideIndex.value;
     const src = doc.slides[i];
-    const clone = structuredClone(src);
+    const clone = deepClone(src);
     clone.id = genId();
     doc.slides.splice(i + 1, 0, clone);
     slideIndex.value = i + 1;
@@ -95,7 +117,7 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
     if (!slide) return;
     const i = slide.elements.findIndex((e) => e.id === id);
     if (i < 0) return;
-    const clone = structuredClone(slide.elements[i]) as PptElementModel;
+    const clone = deepClone(slide.elements[i]) as PptElementModel;
     clone.id = genId();
     clone.x += 20;
     clone.y += 20;
@@ -106,7 +128,7 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
       const linkedText = slide.elements.find((e) => e.id === clone.textId);
       if (linkedText) {
         textOriginId = linkedText.id;
-        textClone = structuredClone(linkedText) as PptElementModel;
+        textClone = deepClone(linkedText) as PptElementModel;
         textClone.id = genId();
         textClone.x += 20;
         textClone.y += 20;
@@ -153,18 +175,34 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
   function setClipboard(id: string) {
     const el = doc.slides[slideIndex.value]?.elements.find((e) => e.id === id);
     if (!el) return;
-    clipboard.value = structuredClone(el) as PptElementModel;
+    clipboard.value = deepClone(el) as PptElementModel;
   }
 
-  // 粘贴：克隆剪贴板元素，偏移一段距离插入当前页并选中
+  // 粘贴：克隆剪贴板元素，偏移一段距离插入当前页并选中。
+  // 媒体元素成对克隆：与 copyElement 一致地重映射关联业务文本（找不到时清掉 textId，
+  // 避免与原媒体共享同一 bizText 导致拖动/隐藏联动错乱）
   function pasteElement() {
     const slide = doc.slides[slideIndex.value];
     if (!slide || !clipboard.value) return;
-    const clone = structuredClone(clipboard.value) as PptElementModel;
+    const clone = deepClone(clipboard.value) as PptElementModel;
     clone.id = genId();
     clone.x += 20;
     clone.y += 20;
+    let textClone: PptElementModel | null = null;
+    if (clone.type === 'media' && clone.textId) {
+      const linkedText = slide.elements.find((e) => e.id === clone.textId);
+      if (linkedText) {
+        textClone = deepClone(linkedText) as PptElementModel;
+        textClone.id = genId();
+        textClone.x += 20;
+        textClone.y += 20;
+        clone.textId = textClone.id;
+      } else {
+        delete clone.textId;
+      }
+    }
     slide.elements.push(clone);
+    if (textClone) slide.elements.push(textClone);
     selectedElementId.value = clone.id;
     editingElementId.value = '';
   }
@@ -176,6 +214,9 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
     selectedElementId,
     selectedElement,
     editingElementId,
+    showRuler,
+    showGuides,
+    guides,
     clipboard,
     createSlide,
     deleteSlide,

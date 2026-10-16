@@ -7,8 +7,11 @@ interface SlidesState {
   slideIndex: { value: number };
   currentSlide: ReturnType<typeof computed>;
   selectedElementId: { value: string };
-  selectedElement: ReturnType<typeof computed>;
+  selectedElement: { value: PptElementModel | null };
   editingElementId: { value: string };
+  showRuler: { value: boolean };
+  showGuides: { value: boolean };
+  guides: { value: { x: number; y: number } };
   clipboard: { value: PptElementModel | null };
   createSlide: (type?: PptSlideType) => void;
   deleteSlide: (index?: number) => void;
@@ -43,6 +46,18 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
   // 选中 / 编辑态（参考 PPTist store 的 activeElementIdList 简化为单选）
   const selectedElementId = reactive({ value: '' });
   const editingElementId = reactive({ value: '' });
+
+  // 编辑辅助 UI：标尺 / 参考线显隐与参考线位置（编辑器级状态，不进文档数据；
+  // Toolbar 与画布容器（PptStage）经 state 共享）
+  const showRuler = reactive({ value: false });
+  const showGuides = reactive({ value: false });
+  // 参考线位置（文档坐标）：x 为垂直线位置、y 为水平线位置，缺省居中
+  const guides = reactive({
+    value: {
+      x: Math.round(doc.width / 2),
+      y: Math.round(doc.height / 2),
+    },
+  });
 
   // 当前选中元素
   const selectedElement = computed<PptElementModel | null>(() => {
@@ -189,7 +204,9 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     clipboard.value = JSON.parse(JSON.stringify(el)) as PptElementModel;
   }
 
-  // 粘贴：克隆剪贴板元素，偏移一段距离插入当前页并选中
+  // 粘贴：克隆剪贴板元素，偏移一段距离插入当前页并选中。
+  // 媒体元素成对克隆：与 copyElement 一致地重映射关联业务文本（找不到时清掉 textId，
+  // 避免与原媒体共享同一 bizText 导致拖动/隐藏联动错乱）
   function pasteElement() {
     const slide = doc.slides[slideIndex.value];
     if (!slide || !clipboard.value) return;
@@ -197,7 +214,21 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     clone.id = genId();
     clone.x += 20;
     clone.y += 20;
+    let textClone: PptElementModel | null = null;
+    if (clone.type === 'media' && clone.textId) {
+      const linkedText = (slide.elements || []).find((e) => e.id === clone.textId);
+      if (linkedText) {
+        textClone = JSON.parse(JSON.stringify(linkedText)) as PptElementModel;
+        textClone.id = genId();
+        textClone.x += 20;
+        textClone.y += 20;
+        clone.textId = textClone.id;
+      } else {
+        delete clone.textId;
+      }
+    }
     slide.elements.push(clone);
+    if (textClone) slide.elements.push(textClone);
     selectedElementId.value = clone.id;
     editingElementId.value = '';
   }
@@ -209,6 +240,9 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     selectedElementId,
     selectedElement,
     editingElementId,
+    showRuler,
+    showGuides,
+    guides,
     clipboard,
     createSlide,
     deleteSlide,

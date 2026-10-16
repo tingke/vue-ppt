@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, type CSSProperties } from 'vue';
+import { computed, inject, onBeforeUnmount, ref, type CSSProperties } from 'vue';
 import {
   EDITOR_EMITTER,
   RICH_TEXT_COMMAND,
@@ -143,6 +143,9 @@ function onPickVariable(tag: { key: string; label: string }) {
 }
 
 emitter.on(RICH_TEXT_COMMAND, onRichTextCommand);
+onBeforeUnmount(() => {
+  emitter.off(RICH_TEXT_COMMAND, onRichTextCommand);
+});
 </script>
 
 <style scoped>
