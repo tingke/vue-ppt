@@ -15,7 +15,7 @@ export interface PptSlideModel {
   slideType?: PptSlideType;
 }
 
-export type PptElementModel = PptTextElement | PptBizTextElement | PptImageElement | PptShapeElement | PptTableElement;
+export type PptElementModel = PptTextElement | PptBizTextElement | PptImageElement | PptShapeElement | PptTableElement | PptMediaElement;
 
 export interface PptBaseElement {
   id: string;
@@ -24,6 +24,8 @@ export interface PptBaseElement {
   width: number;
   height: number;
   rotation?: number;
+  /** 是否隐藏（不渲染、不可交互，如媒体关联的业务文本经右键隐藏/显示） */
+  hidden?: boolean;
 }
 
 export type PptTextAlign = 'left' | 'center' | 'right' | 'justify';
@@ -66,6 +68,22 @@ export interface PptBizVariableNode {
  */
 export interface PptBizTextElement extends Omit<PptTextElement, 'type'> {
   type: 'bizText';
+}
+
+/**
+ * 媒体组件：图片 + 级联选照片的纵向组合（业务定制）。
+ * 上部 3:4 图片（src 缺省显示占位图，由业务侧填充），点击图片弹出级联选择照片
+ * （optionPath 记录选中路径）；关联的业务文本为独立 bizText 元素（textId），
+ * 可随意拖动 / 独立删除 / 经媒体右键隐藏。
+ */
+export interface PptMediaElement extends PptBaseElement {
+  type: 'media';
+  /** 海报图地址，缺省显示 3:4 占位图 */
+  src?: string;
+  /** 级联选中的照片路径（「/」分隔，如 特殊照/系统社区/拍照第1张），缺省未选 */
+  optionPath?: string;
+  /** 关联业务文本元素（独立 bizText，随媒体插入一并创建），缺省无 */
+  textId?: string;
 }
 
 export interface PptImageElement extends PptBaseElement {

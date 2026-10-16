@@ -3,7 +3,7 @@
  * 工具栏「插入」只负责选类型与时机，元素的默认尺寸 / 样式 / 位置统一在此维护，
  * 保证双端插入行为一致。图片文件读取工具也集中在此。
  */
-import type { PptBizTextElement, PptImageElement, PptTableElement, PptTableCell, PptTextElement } from './index';
+import type { PptBizTextElement, PptImageElement, PptMediaElement, PptTableElement, PptTableCell, PptTextElement } from './index';
 
 let idCounter = 0;
 
@@ -43,6 +43,41 @@ export function createTextElement(doc: DocSize): PptTextElement {
 /** 插入业务文本元素：默认尺寸 / 样式与文本元素一致（业务字段 tag 经 fx 选择后插入） */
 export function createBizTextElement(doc: DocSize): PptBizTextElement {
   return { ...createTextElement(doc), type: 'bizText' };
+}
+
+/**
+ * 插入媒体元素：宽 200，高为 3:4 图片高（267）。点击图片弹出级联选照片，
+ * 关联业务文本经 createMediaTextElement 一并创建（见下）。
+ */
+export function createMediaElement(doc: DocSize): PptMediaElement {
+  const width = 200;
+  const height = Math.round((width * 4) / 3);
+  return {
+    id: genId(),
+    type: 'media',
+    x: Math.round((doc.width - width) / 2),
+    y: Math.round((doc.height - height) / 2),
+    width,
+    height,
+  };
+}
+
+/**
+ * 媒体关联的业务文本：独立 bizText 元素，位于媒体正下方、同宽、高 44。
+ * 可随意拖动 / 独立删除；媒体经 textId 关联，拖动媒体时跟随移动。
+ */
+export function createMediaTextElement(media: { x: number; y: number; width: number; height: number }): PptBizTextElement {
+  return {
+    id: genId(),
+    type: 'bizText',
+    x: media.x,
+    y: media.y + media.height + 12,
+    width: media.width,
+    height: 44,
+    text: '',
+    fontSize: 14,
+    color: '#303133',
+  };
 }
 
 /** 插入图片元素：按原图比例缩放至画布 fitRatio 比例范围内并居中（参考 PPTist createImageElement） */

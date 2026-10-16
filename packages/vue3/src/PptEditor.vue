@@ -1,6 +1,6 @@
 <template>
   <div class="vpk-editor">
-    <Toolbar :doc="state.doc" :state="state" @insert="state.addElement" @save="emit('save')" />
+    <Toolbar :doc="state.doc" :state="state" @insert="onInsert" @save="emit('save')" />
     <div class="vpk-main">
       <SlideThumbnails
         :doc="state.doc"
@@ -43,6 +43,7 @@
           @element-contextmenu="onElementContextMenu"
           @update-text="onUpdateText"
           @input-text="onInputText"
+          @element-update="onElementUpdate"
         />
       </div>
 
@@ -79,13 +80,15 @@ import { ref, computed, reactive, onMounted, onUnmounted, provide, watch, type P
 import {
   createEmitter,
   EDITOR_EMITTER,
+  createMediaTextElement,
   type PptBizVariableNode,
   type PptDocumentModel,
   type PptElementModel,
+  type PptMediaElement,
 } from '@vue-ppt-kit/core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
-import { BIZ_VARIABLES_KEY } from './emitter';
+import { BIZ_VARIABLES_KEY, MEDIA_OPTIONS_KEY } from './emitter';
 import SlideThumbnails from './SlideThumbnails.vue';
 import SlideCanvas from './SlideCanvas.vue';
 import Toolbar from './Toolbar.vue';
@@ -94,6 +97,8 @@ const props = defineProps({
   document: { type: Object as PropType<PptDocumentModel>, default: undefined },
   /** 业务变量树：业务文本组件 fx 级联选择数据源（编辑器级配置，不进文档数据） */
   bizVariables: { type: Object as PropType<PptBizVariableNode[]>, default: undefined },
+  /** 媒体组件下拉选项树（编辑器级配置，不进文档数据） */
+  mediaOptions: { type: Object as PropType<PptBizVariableNode[]>, default: undefined },
 });
 
 // 保存事件：由 Toolbar 触发，转发给宿主应用自行处理持久化
@@ -103,8 +108,9 @@ const emit = defineEmits<{ (e: 'save'): void }>();
 // 页面上多个 PptEditor 实例时富文本命令 / 状态回显互不串扰
 provide(EDITOR_EMITTER, createEmitter());
 
-// 业务变量树下发（业务文本组件 inject）；树为静态配置，不做深层响应
+// 业务变量树 / 媒体选项树下发（业务文本与媒体组件 inject）；树为静态配置，不做深层响应
 provide(BIZ_VARIABLES_KEY, props.bizVariables ?? []);
+provide(MEDIA_OPTIONS_KEY, props.mediaOptions ?? []);
 
 const state = useSlides(props.document ? { document: props.document } : undefined);
 
@@ -172,11 +178,34 @@ function onInputText(payload: { id: string; text: string; height: number }) {
   state.updateElement(payload.id, { text: payload.text, height: payload.height });
 }
 
+// ==================== 通用元素属性更新（媒体组件选照片等） ====================
+
+function onElementUpdate(payload: { id: string; patch: Partial<PptElementModel> }) {
+  state.updateElement(payload.id, payload.patch);
+}
+
+// ==================== 插入元素（媒体组件成对创建关联业务文本） ====================
+
+function onInsert(element: PptElementModel) {
+  if (element.type === 'media') {
+    // 媒体 + 关联业务文本（独立 bizText，位于媒体正下方）：拖动媒体时文本跟随
+    const text = createMediaTextElement(element);
+    (element as PptMediaElement).textId = text.id;
+    state.addElement(element);
+    state.addElement(text);
+    // 选中态落在媒体上（而非后插入的关联文本）
+    state.selectedElementId.value = element.id;
+    return;
+  }
+  state.addElement(element);
+}
+
 // ==================== 元素右键菜单（参考 PPTist EditableElement contextmenus） ====================
 
 interface ElMenuItem {
   text?: string;
   subText?: string;
+  disabled?: boolean;
   handler?: () => void;
   divider?: boolean;
 }
@@ -186,8 +215,28 @@ const elMenu = reactive({ visible: false, x: 0, y: 0, element: null as PptElemen
 const elMenuItems = computed<ElMenuItem[]>(() => {
   const el = elMenu.element;
   if (!el) return [];
-  return [
+  const items: ElMenuItem[] = [
     { text: '复制', subText: 'Ctrl + C', handler: () => state.copyElement(el.id) },
+  ];
+  // 媒体组件：隐藏/显示关联的业务文本（独立元素置 hidden，可再显示）
+  if (el.type === 'media') {
+    const textId = (el as PptMediaElement).textId;
+    const linked = textId
+      ? state.doc.slides[state.slideIndex.value]?.elements.find((e) => e.id === textId)
+      : null;
+    items.push(
+      { divider: true },
+      {
+        text: linked && linked.hidden ? '显示输入框' : '隐藏输入框',
+        disabled: !linked,
+        handler: () => {
+          if (!textId || !linked) return;
+          state.updateElement(textId, { hidden: !linked.hidden } as Partial<PptElementModel>);
+        },
+      },
+    );
+  }
+  items.push(
     { divider: true },
     { text: '水平居中', handler: () => state.alignElementToCanvas(el.id, 'horizontal') },
     { text: '垂直居中', handler: () => state.alignElementToCanvas(el.id, 'vertical') },
@@ -198,7 +247,8 @@ const elMenuItems = computed<ElMenuItem[]>(() => {
     { text: '置于底层', handler: () => state.orderElement(el.id, 'bottom') },
     { divider: true },
     { text: '删除', subText: 'Delete', handler: () => state.removeElement(el.id) },
-  ];
+  );
+  return items;
 });
 
 function onElementContextMenu(payload: { element: PptElementModel; x: number; y: number }) {

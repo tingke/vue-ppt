@@ -10,11 +10,11 @@
   >
     <template v-if="slide">
       <div
-        v-for="el in slide.elements"
+        v-for="el in visibleElements"
         :key="el.id"
         class="vpk-element"
-        :class="{ interactive: !static, selected: el.id === selectedId }"
-        :style="[elementStyle(el), el.id === selectedId ? selectedOutline : null]"
+        :class="{ interactive: !static, selected: el.id === selectedId || el.id === selectedLinkedId }"
+        :style="[elementStyle(el), el.id === selectedId || el.id === selectedLinkedId ? selectedOutline : null]"
         @mousedown="onElementMouseDown(el, $event)"
         @dblclick="onElementDblClick(el)"
         @contextmenu.stop.prevent="onElementContextMenu(el, $event)"
@@ -25,9 +25,10 @@
           :element="el"
           :scale="scale"
           :editing="el.id === editingId"
-          :static="el.type === 'text' || el.type === 'bizText' ? static : undefined"
+          :static="el.type === 'text' || el.type === 'bizText' || el.type === 'media' ? static : undefined"
           @commit="onTextCommit(el, $event)"
           @update="onTextUpdate(el, $event)"
+          @option="onMediaOption(el, $event)"
         />
 
         <!-- 选中缩放手柄（参考 PPTist Operate 层；文本元素仅左右两点） -->
@@ -64,6 +65,7 @@ import {
   type AlignLineSet,
   type AlignLineView,
   type PptElementModel,
+  type PptMediaElement,
   type PptSlideModel,
   type ResizeDirection,
 } from '@vue-ppt-kit/core';
@@ -98,6 +100,7 @@ const emit = defineEmits<{
   (e: 'element-contextmenu', payload: { element: PptElementModel; x: number; y: number }): void;
   (e: 'update-text', payload: { id: string; text: string; height: number }): void;
   (e: 'input-text', payload: { id: string; text: string; height: number }): void;
+  (e: 'element-update', payload: { id: string; patch: Partial<PptElementModel> }): void;
 }>();
 
 // 元素定位（尺寸/位置按 scale 缩放），内容渲染交给 elements/ 下的类型组件
@@ -111,6 +114,15 @@ function elementStyle(el: PptElementModel): CSSProperties {
     transform: el.rotation ? `rotate(${el.rotation}deg)` : undefined,
   };
 }
+
+// 隐藏元素不渲染（如媒体关联的业务文本经右键隐藏）
+const visibleElements = computed<PptElementModel[]>(() => (props.slide?.elements ?? []).filter((e) => !e.hidden));
+
+// 选中媒体时同步高亮其关联的业务文本（反之不联动）
+const selectedLinkedId = computed<string | undefined>(() => {
+  const selected = visibleElements.value.find((e) => e.id === props.selectedId);
+  return selected && selected.type === 'media' ? (selected as PptMediaElement).textId : undefined;
+});
 
 // 仅选中元素显示虚线框（参考 PPTist Operate 选中层），线宽按画布缩放反向补偿，视觉恒定 1px
 const selectedOutline = computed(() => ({
@@ -140,6 +152,8 @@ interface DragContext {
   isMisoperation: boolean | null;
   /** mousedown 时收集的吸附线缓存：拖动中其他元素不动，无需每帧重算 */
   alignLines: AlignLineSet;
+  /** 媒体关联的业务文本（拖动媒体时跟随移动，保持相对位置） */
+  linked: { id: string; x: number; y: number } | null;
 }
 let dragContext: DragContext | null = null;
 
@@ -160,8 +174,15 @@ function onElementMouseDown(el: PptElementModel, e: MouseEvent) {
     originX: el.x,
     originY: el.y,
     isMisoperation: null,
-    alignLines: collectAlignLines(props.slide?.elements ?? [], props.width, props.height, el.id),
+    alignLines: collectAlignLines((props.slide?.elements ?? []).filter((e) => !e.hidden), props.width, props.height, el.id),
+    linked: null,
   };
+  // 媒体元素：关联业务文本随媒体一起拖动（保持相对位置）
+  if (el.type === 'media') {
+    const textId = (el as PptMediaElement).textId;
+    const linked = textId ? props.slide?.elements.find((e) => e.id === textId) : null;
+    if (linked) dragContext.linked = { id: linked.id, x: linked.x, y: linked.y };
+  }
   document.addEventListener('mousemove', onDocumentMouseMove);
   document.addEventListener('mouseup', onDocumentMouseUp);
 }
@@ -200,6 +221,10 @@ function onDocumentMouseMove(e: MouseEvent) {
   alignLineViews.value = lines;
 
   emit('drag-move', { id: ctx.element.id, x, y });
+  // 关联业务文本跟随媒体移动（保持相对位置）
+  if (ctx.linked) {
+    emit('drag-move', { id: ctx.linked.id, x: ctx.linked.x + (x - ctx.originX), y: ctx.linked.y + (y - ctx.originY) });
+  }
 }
 
 function onDocumentMouseUp() {
@@ -260,7 +285,7 @@ function onResizeStart(el: PptElementModel, direction: ResizeDirection, e: Mouse
     startX: e.clientX,
     startY: e.clientY,
     origin: { x: el.x, y: el.y, width: el.width, height: el.height },
-    alignLines: collectAlignLines(props.slide?.elements ?? [], props.width, props.height, el.id),
+    alignLines: collectAlignLines((props.slide?.elements ?? []).filter((e) => !e.hidden), props.width, props.height, el.id),
   };
   document.addEventListener('mousemove', onResizeMouseMove);
   document.addEventListener('mouseup', onResizeMouseUp);
@@ -319,7 +344,7 @@ function onResizeMouseUp() {
 // ==================== 文本编辑与事件 ====================
 
 function onElementDblClick(el: PptElementModel) {
-  // 文本类元素（文本/业务文本）双击进入编辑
+  // 文本类元素（文本/业务文本）双击进入编辑（媒体无内嵌文本，不进编辑）
   if (props.static || (el.type !== 'text' && el.type !== 'bizText')) return;
   emit('edit-text', el);
 }
@@ -338,6 +363,11 @@ function onTextCommit(el: PptElementModel, payload: { text: string; height: numb
 // 编辑过程中实时同步（不清理编辑态、不触发空文本删除）
 function onTextUpdate(el: PptElementModel, payload: { text: string; height: number }) {
   emit('input-text', { id: el.id, text: payload.text, height: payload.height });
+}
+
+// 媒体下拉级联选中：回写 optionPath（完整路径）
+function onMediaOption(el: PptElementModel, payload: { optionPath: string }) {
+  emit('element-update', { id: el.id, patch: { optionPath: payload.optionPath } });
 }
 
 onUnmounted(() => {

@@ -132,7 +132,28 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     clone.id = genId();
     clone.x += 20;
     clone.y += 20;
+    // 媒体元素：关联业务文本一并复制，克隆体 textId 指向新文本（保持拖动跟随 / 隐藏联动）
+    let textClone: PptElementModel | null = null;
+    let textOriginId = '';
+    if (clone.type === 'media' && clone.textId) {
+      const linkedText = slide.elements.find((e) => e.id === clone.textId);
+      if (linkedText) {
+        textOriginId = linkedText.id;
+        textClone = JSON.parse(JSON.stringify(linkedText)) as PptElementModel;
+        textClone.id = genId();
+        textClone.x += 20;
+        textClone.y += 20;
+        clone.textId = textClone.id;
+      } else {
+        delete clone.textId;
+      }
+    }
     slide.elements.splice(i + 1, 0, clone);
+    // 关联文本克隆紧随原文本之后
+    if (textClone) {
+      const j = slide.elements.findIndex((e) => e.id === textOriginId);
+      slide.elements.splice(j + 1, 0, textClone);
+    }
     selectedElementId.value = clone.id;
     editingElementId.value = '';
   }

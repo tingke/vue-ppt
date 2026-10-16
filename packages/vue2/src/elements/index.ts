@@ -3,6 +3,7 @@
 import { Component } from 'vue';
 import TextElement from './TextElement.vue';
 import BizTextElement from './BizTextElement.vue';
+import MediaElement from './MediaElement.vue';
 import ImageElement from './ImageElement.vue';
 import ShapeElement from './ShapeElement.vue';
 import TableElement from './TableElement.vue';
@@ -10,6 +11,7 @@ import TableElement from './TableElement.vue';
 export const elementComponentMap: Record<string, Component> = {
   text: TextElement,
   bizText: BizTextElement,
+  media: MediaElement,
   image: ImageElement,
   shape: ShapeElement,
   table: TableElement,

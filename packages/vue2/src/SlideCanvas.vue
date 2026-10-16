@@ -9,11 +9,11 @@
   >
     <template v-if="slide">
       <div
-        v-for="el in slide.elements"
+        v-for="el in visibleElements"
         :key="el.id"
         class="vpk-element"
-        :class="{ interactive: !static, selected: el.id === selectedId }"
-        :style="[elementStyle(el), el.id === selectedId ? selectedOutline : null]"
+        :class="{ interactive: !static, selected: el.id === selectedId || el.id === selectedLinkedId }"
+        :style="[elementStyle(el), el.id === selectedId || el.id === selectedLinkedId ? selectedOutline : null]"
         @mousedown="onElementMouseDown(el, $event)"
         @dblclick="onElementDblClick(el)"
         @contextmenu.stop.prevent="onElementContextMenu(el, $event)"
@@ -24,9 +24,10 @@
           :element="el"
           :scale="scale"
           :editing="el.id === editingId"
-          :static="el.type === 'text' || el.type === 'bizText' ? static : undefined"
+          :static="el.type === 'text' || el.type === 'bizText' || el.type === 'media' ? static : undefined"
           @commit="onTextCommit(el, $event)"
           @update="onTextUpdate(el, $event)"
+          @option="onMediaOption(el, $event)"
         />
 
         <!-- 选中缩放手柄（参考 PPTist Operate 层；文本元素仅左右两点） -->
@@ -63,6 +64,7 @@ import {
   AlignLineSet,
   AlignLineView,
   PptElementModel,
+  PptMediaElement,
   ResizeDirection,
 } from '@vue-ppt-kit/core';
 import { elementComponentMap } from './elements';
@@ -76,6 +78,8 @@ interface DragContext {
   isMisoperation: boolean | null;
   /** mousedown 时收集的吸附线缓存：拖动中其他元素不动，无需每帧重算 */
   alignLines: AlignLineSet;
+  /** 媒体关联的业务文本（拖动媒体时跟随移动，保持相对位置） */
+  linked: { id: string; x: number; y: number } | null;
 }
 
 interface ResizeContext {
@@ -112,6 +116,16 @@ export default Vue.extend({
     // 供模板动态组件使用（vue2 模板无法直接访问导入绑定）
     elementComponentMap(): typeof elementComponentMap {
       return elementComponentMap;
+    },
+    // 隐藏元素不渲染（如媒体关联的业务文本经右键隐藏）
+    visibleElements(): PptElementModel[] {
+      const slide = this.slide as { elements?: PptElementModel[] } | undefined;
+      return (slide && slide.elements || []).filter((e: PptElementModel) => !e.hidden);
+    },
+    // 选中媒体时同步高亮其关联的业务文本（反之不联动）
+    selectedLinkedId(): string | undefined {
+      const selected = this.visibleElements.find((e: PptElementModel) => e.id === this.selectedId);
+      return selected && selected.type === 'media' ? (selected as PptMediaElement).textId : undefined;
     },
     // 仅选中元素显示虚线框（参考 PPTist Operate 选中层），线宽按画布缩放反向补偿，视觉恒定 1px
     selectedOutline(): Record<string, string> {
@@ -165,8 +179,15 @@ export default Vue.extend({
         originX: el.x,
         originY: el.y,
         isMisoperation: null,
-        alignLines: collectAlignLines(this.slide?.elements || [], this.width, this.height, el.id),
+        alignLines: collectAlignLines((this.slide?.elements || []).filter((e: PptElementModel) => !e.hidden), this.width, this.height, el.id),
+        linked: null,
       };
+      // 媒体元素：关联业务文本随媒体一起拖动（保持相对位置）
+      if (el.type === 'media') {
+        const textId = (el as PptMediaElement).textId;
+        const linked = textId && (this.slide?.elements || []).find((e: PptElementModel) => e.id === textId);
+        if (linked) this.dragContext.linked = { id: linked.id, x: linked.x, y: linked.y };
+      }
       document.addEventListener('mousemove', this.onDocumentMouseMove);
       document.addEventListener('mouseup', this.onDocumentMouseUp);
     },
@@ -205,6 +226,10 @@ export default Vue.extend({
       this.alignLineViews = lines;
 
       this.$emit('drag-move', { id: ctx.element.id, x, y });
+      // 关联业务文本跟随媒体移动（保持相对位置）
+      if (ctx.linked) {
+        this.$emit('drag-move', { id: ctx.linked.id, x: ctx.linked.x + (x - ctx.originX), y: ctx.linked.y + (y - ctx.originY) });
+      }
     },
 
     onDocumentMouseUp() {
@@ -253,7 +278,7 @@ export default Vue.extend({
         startX: e.clientX,
         startY: e.clientY,
         origin: { x: el.x, y: el.y, width: el.width, height: el.height },
-        alignLines: collectAlignLines(this.slide?.elements || [], this.width, this.height, el.id),
+        alignLines: collectAlignLines((this.slide?.elements || []).filter((e: PptElementModel) => !e.hidden), this.width, this.height, el.id),
       };
       document.addEventListener('mousemove', this.onResizeMouseMove);
       document.addEventListener('mouseup', this.onResizeMouseUp);
@@ -313,7 +338,7 @@ export default Vue.extend({
     // ==================== 文本编辑与事件 ====================
 
     onElementDblClick(el: PptElementModel) {
-      // 文本类元素（文本/业务文本）双击进入编辑
+      // 文本类元素（文本/业务文本）双击进入编辑（媒体无内嵌文本，不进编辑）
       if (this.static || (el.type !== 'text' && el.type !== 'bizText')) return;
       this.$emit('edit-text', el);
     },
@@ -332,6 +357,11 @@ export default Vue.extend({
     // 编辑过程中实时同步（不清理编辑态、不触发空文本删除）
     onTextUpdate(el: PptElementModel, payload: { text: string; height: number }) {
       this.$emit('input-text', { id: el.id, text: payload.text, height: payload.height });
+    },
+
+    // 媒体下拉级联选中：回写 optionPath（完整路径）
+    onMediaOption(el: PptElementModel, payload: { optionPath: string }) {
+      this.$emit('element-update', { id: el.id, patch: { optionPath: payload.optionPath } });
     },
   },
 });

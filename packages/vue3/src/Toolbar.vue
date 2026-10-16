@@ -291,9 +291,14 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 组件：业务文本 / 文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
+        <!-- 组件：媒体 / 业务文本 / 文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
+            <button type="button" class="vpk-tool-btn" title="插入媒体（图片 + 下拉 + 业务文本）" @click="insertMediaElement">
+              <span class="vpk-icon" v-html="ICONS.image"></span>
+              <span>媒体</span>
+            </button>
+
             <button type="button" class="vpk-tool-btn" title="插入业务文本（支持业务字段混排）" @click="insertBizTextElement">
               <span class="vpk-icon" v-html="ICONS.text"></span>
               <span>业务文本</span>
@@ -353,6 +358,7 @@ import {
   TOOLBAR_ICONS,
   createBizTextElement,
   createImageElement,
+  createMediaElement,
   createTextElement,
   readFileAsImage,
   stripRichTextStyle,
@@ -552,6 +558,10 @@ function insertTextElement() {
 
 function insertBizTextElement() {
   emitInsert(createBizTextElement(props.doc));
+}
+
+function insertMediaElement() {
+  emitInsert(createMediaElement(props.doc));
 }
 
 // 图片插入：文件选择 → dataURL → 按原图比例缩放至文档尺寸内并居中
