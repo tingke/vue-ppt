@@ -1,5 +1,5 @@
 <template>
-  <div class="vpk-table" :style="tableStyle">
+  <div ref="rootRef" class="vpk-table" :style="tableStyle" @mousedown="onRootMouseDown">
     <table class="vpk-table-inner">
       <colgroup>
         <col v-for="(w, i) in colWidths" :key="i" :style="{ width: w * 100 + '%' }" />
@@ -7,12 +7,35 @@
       <tbody>
         <tr v-for="(row, r) in element.data" :key="r">
           <td
-            v-for="cell in row"
+            v-for="(cell, c) in row"
             :key="cell.id"
             :colspan="cell.colspan || 1"
             :rowspan="cell.rowspan || 1"
+            :class="{ editing: isEditingCell(r, c) }"
             :style="cellStyle(r)"
-          >{{ cell.text }}</td>
+            @mousedown="onCellMouseDown(r, c, $event)"
+            @dblclick="onCellDblClick(r, c)"
+          >
+            <!-- 双击编辑态：单元格内挂富文本编辑器（普通表格 → 文本组件；富表格 → 业务文本组件） -->
+            <TextElement
+              v-if="isEditingCell(r, c) && !biz"
+              :element="cellTextElement(cell, r)"
+              :scale="scale"
+              editing
+              @update="writeCellText(r, c, $event.text)"
+              @commit="onCellEditorCommit(r, c, $event)"
+            />
+            <BizTextElement
+              v-else-if="isEditingCell(r, c) && biz"
+              :element="cellBizTextElement(cell, r)"
+              :scale="scale"
+              editing
+              @update="writeCellText(r, c, $event.text)"
+              @commit="onCellEditorCommit(r, c, $event)"
+            />
+            <!-- 静态内容：编辑器序列化为受限内联 HTML（富文本 / 业务字段 tag），白名单过滤后输出 -->
+            <span v-else class="ProseMirror-static" v-html="sanitizeRichText(cell.text)"></span>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -20,14 +43,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, type PropType } from 'vue';
-import type { PptTableElement } from '@vue-ppt-kit/core';
+import { computed, nextTick, onBeforeUnmount, ref, type PropType } from 'vue';
+import { sanitizeRichText, type PptBizTableElement, type PptBizTextElement, type PptTableCell, type PptTableElement, type PptTextElement } from '@vue-ppt-kit/core';
+import TextElement from './TextElement.vue';
+import BizTextElement from './BizTextElement.vue';
 
-// 参考 PPTist BaseTableElement：纯静态渲染表格元素
+// 参考 PPTist BaseTableElement：双击单元格进入编辑（单元格内挂富文本编辑器，
+// 失焦 / 卸载 flush / Escape 提交）。biz 为 true 时即富表格：单元格为业务文本（fx 业务字段混排）
 const props = defineProps({
-  element: { type: Object as PropType<PptTableElement>, required: true },
+  element: { type: Object as PropType<PptTableElement | PptBizTableElement>, required: true },
   scale: { type: Number, default: 1 },
+  /** 静态渲染（缩略图等）：不响应双击编辑 */
+  static: { type: Boolean, default: false },
+  /** 富表格模式：单元格编辑器为业务文本组件（BizTextElement） */
+  biz: { type: Boolean, default: false },
 });
+
+// 提交整份 data（二维数组），由画布转 element-update 写入 store
+const emit = defineEmits<{
+  (e: 'cell-update', data: PptTableCell[][]): void;
+}>();
 
 const colWidths = computed(() => {
   const colCount = props.element.data.length ? props.element.data[0].length : 0;
@@ -51,6 +86,110 @@ function cellStyle(row: number) {
     color: isHeader ? el.headerColor || '#fff' : undefined,
   };
 }
+
+// ==================== 单元格编辑 ====================
+
+const rootRef = ref<HTMLElement>();
+const editingCell = ref<{ r: number; c: number } | null>(null);
+
+function isEditingCell(r: number, c: number) {
+  return !!editingCell.value && editingCell.value.r === r && editingCell.value.c === c;
+}
+
+// 编辑器伪元素：id 取 cell.id（防富文本命令误投递），样式取表格级属性（表头行用表头色）
+function cellBase(cell: PptTableCell, row: number) {
+  const el = props.element;
+  const isHeader = row === 0 && el.headerFill;
+  return {
+    id: cell.id,
+    x: 0,
+    y: 0,
+    width: el.width,
+    height: el.height,
+    text: cell.text,
+    fontSize: el.fontSize || 14,
+    color: isHeader ? el.headerColor || '#fff' : el.color || '#606266',
+    align: 'left' as const,
+  };
+}
+function cellTextElement(cell: PptTableCell, row: number): PptTextElement {
+  return { ...cellBase(cell, row), type: 'text' };
+}
+function cellBizTextElement(cell: PptTableCell, row: number): PptBizTextElement {
+  return { ...cellBase(cell, row), type: 'bizText' };
+}
+
+// 编辑中点击其他单元格：切换单元格（编辑器卸载 flush 保证旧内容写回），且不启动拖拽
+function onCellMouseDown(r: number, c: number, e: MouseEvent) {
+  if (props.static || !editingCell.value) return;
+  e.stopPropagation();
+  if (!isEditingCell(r, c)) {
+    editingCell.value = { r, c };
+    nextTick(focusCellEditor);
+  }
+}
+
+// 单元格编辑中阻止 mousedown 冒泡（点边框等非单元格区域）：画布不拖拽、不切换选中
+function onRootMouseDown(e: MouseEvent) {
+  if (editingCell.value) e.stopPropagation();
+}
+
+function onCellDblClick(r: number, c: number) {
+  if (props.static) return;
+  editingCell.value = { r, c };
+  document.addEventListener('mousedown', onDocMouseDown);
+  nextTick(focusCellEditor);
+}
+
+// 编辑器挂载 / 切换后聚焦并全选，便于直接输入覆盖
+function focusCellEditor() {
+  const pm = rootRef.value?.querySelector<HTMLElement>('.ProseMirror');
+  if (!pm) return;
+  pm.focus();
+  const sel = window.getSelection();
+  if (sel) {
+    const range = document.createRange();
+    range.selectNodeContents(pm);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+// 内容回写：位置显式传入，与编辑器卸载 / 切换的 flush 时序解耦
+function writeCellText(r: number, c: number, text: string) {
+  const cell = props.element.data[r]?.[c];
+  if (!cell || cell.text === text) return;
+  emit(
+    'cell-update',
+    props.element.data.map((row, ri) =>
+      row.map((item, ci) => (ri === r && ci === c ? { ...item, text } : item))
+    )
+  );
+}
+
+// Escape 提交：写回后退出编辑
+function onCellEditorCommit(r: number, c: number, payload: { text: string }) {
+  writeCellText(r, c, payload.text);
+  exitCell();
+}
+
+// 点击表格外部退出编辑（fx 级联面板挂 body，视为内部）：
+// 最终内容由编辑器失焦 / 卸载 flush 写回，此处只负责退出
+function onDocMouseDown(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (rootRef.value?.contains(target)) return;
+  if (target.closest('.vpk-biz-var-picker')) return;
+  exitCell();
+}
+
+function exitCell() {
+  editingCell.value = null;
+  document.removeEventListener('mousedown', onDocMouseDown);
+}
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onDocMouseDown);
+});
 </script>
 
 <style scoped>
@@ -74,5 +213,9 @@ function cellStyle(row: number) {
   text-align: left;
   word-break: break-word;
   overflow: hidden;
+}
+/* 编辑态：td 作为定位基准（业务文本 fx 按钮锚定单元格右上角） */
+.vpk-table-inner td.editing {
+  position: relative;
 }
 </style>

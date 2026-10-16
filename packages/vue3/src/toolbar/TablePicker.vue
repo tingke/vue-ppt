@@ -2,7 +2,7 @@
   <!-- 参考 PPTist TableGenerator：10x10 网格悬停选择行列，支持自定义输入；fixed 定位避免被滚动容器裁剪 -->
   <div class="vpk-table-picker" :style="popupStyle" @mouseleave="endCell = []">
     <div class="vpk-table-picker-title">
-      <span>{{ isCustom ? '自定义表格' : `表格 ${endCell.length ? `${endCell[0]} x ${endCell[1]}` : ''}` }}</span>
+      <span>{{ isCustom ? `自定义${typeName}` : `${typeName} ${endCell.length ? `${endCell[0]} x ${endCell[1]}` : ''}` }}</span>
       <span class="vpk-table-picker-actions">
         <button type="button" class="vpk-table-picker-toggle" @click="isCustom = !isCustom">{{ isCustom ? '返回' : '自定义' }}</button>
         <span class="vpk-table-picker-close" @click="emit('close')">×</span>
@@ -40,18 +40,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { CSSProperties } from 'vue';
-import { createTableElement, type PptDocumentModel, type PptTableElement } from '@vue-ppt-kit/core';
+import { createBizTableElement, createTableElement, type PptBizTableElement, type PptDocumentModel, type PptTableElement } from '@vue-ppt-kit/core';
 
 const props = defineProps<{
   /** 弹层 fixed 定位坐标（父组件依据触发按钮计算） */
   popupStyle: CSSProperties;
   doc: PptDocumentModel;
+  /** 富表格模式：插入 bizTable 元素（单元格为业务文本） */
+  biz?: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'insert', element: PptTableElement): void;
+  (e: 'insert', element: PptTableElement | PptBizTableElement): void;
   (e: 'close'): void;
 }>();
 
@@ -61,6 +63,8 @@ const isCustom = ref(false);
 const customRow = ref(3);
 const customCol = ref(3);
 
+const typeName = computed(() => (props.biz ? '富表格' : '表格'));
+
 function insertCustomTable() {
   const row = Math.min(20, Math.max(1, Math.round(customRow.value) || 1));
   const col = Math.min(20, Math.max(1, Math.round(customCol.value) || 1));
@@ -69,7 +73,7 @@ function insertCustomTable() {
 }
 
 function insertTableElement(row: number, col: number) {
-  emit('insert', createTableElement(row, col, props.doc));
+  emit('insert', props.biz ? createBizTableElement(props.doc, row, col) : createTableElement(row, col, props.doc));
   emit('close');
 }
 </script>

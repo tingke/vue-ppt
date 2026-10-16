@@ -291,19 +291,43 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 组件：媒体 / 业务文本 / 文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
+        <!-- 业务组件：媒体 / 业务文本 -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
-            <button type="button" class="vpk-tool-btn" title="插入媒体（图片 + 下拉 + 业务文本）" @click="insertMediaElement">
+            <button type="button" class="vpk-tool-btn" title="插入照片" @click="insertMediaElement">
               <span class="vpk-icon" v-html="ICONS.image"></span>
-              <span>媒体</span>
+              <span>照片</span>
             </button>
 
-            <button type="button" class="vpk-tool-btn" title="插入业务文本（支持业务字段混排）" @click="insertBizTextElement">
+            <button type="button" class="vpk-tool-btn" title="插入富文本（支持业务字段混排）" @click="insertBizTextElement">
               <span class="vpk-icon" v-html="ICONS.text"></span>
-              <span>业务文本</span>
+              <span>富文本</span>
             </button>
 
+            <div class="vpk-tool-anchor">
+              <button type="button" class="vpk-tool-btn" title="插入富表格（单元格支持业务字段混排）" :class="{ active: bizTablePickerVisible }" @click="toggleBizTablePicker($event)">
+                <span class="vpk-icon" v-html="ICONS.table"></span>
+                <span>富表格</span>
+              </button>
+
+              <!-- 与表格共用行列选择器（biz 模式构造 bizTable 元素） -->
+              <TablePicker
+                v-if="bizTablePickerVisible"
+                :popup-style="bizTablePopupStyle"
+                :doc="doc"
+                biz
+                @insert="(el) => emitInsert(el)"
+                @close="closeBizTablePicker"
+              />
+            </div>
+          </div>
+        </div>
+
+        <span class="vpk-group-divider" />
+
+        <!-- 组件：文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
+        <div class="vpk-tool-group">
+          <div class="vpk-group-items">
             <button type="button" class="vpk-tool-btn" title="插入文本" @click="insertTextElement">
               <span class="vpk-icon" v-html="ICONS.text"></span>
               <span>文本</span>
@@ -504,6 +528,7 @@ function anchorPopupStyle(e: Event, width: number): CSSProperties {
 function closePopups() {
   colorAnchor.value = null;
   closeTablePicker();
+  closeBizTablePicker();
   closeSlideTypeMenu();
 }
 const currentColor = computed(() => {
@@ -599,11 +624,24 @@ function onBgConfirm(elements: PptImageElement[]) {
 // 表格选择器：网格/自定义行列与元素构造在 TablePicker 内
 const tablePickerVisible = ref(false);
 function toggleTablePicker(e: Event) {
+  closeBizTablePicker();
   tablePickerVisible.value = !tablePickerVisible.value;
   if (tablePickerVisible.value) tablePopupStyle.value = anchorPopupStyle(e, 224);
 }
 function closeTablePicker() {
   tablePickerVisible.value = false;
+}
+
+// 富表格选择器：与表格共用 TablePicker（biz 模式），两者互斥展开
+const bizTablePickerVisible = ref(false);
+const bizTablePopupStyle = ref<CSSProperties>({});
+function toggleBizTablePicker(e: Event) {
+  closeTablePicker();
+  bizTablePickerVisible.value = !bizTablePickerVisible.value;
+  if (bizTablePickerVisible.value) bizTablePopupStyle.value = anchorPopupStyle(e, 224);
+}
+function closeBizTablePicker() {
+  bizTablePickerVisible.value = false;
 }
 
 // 新建幻灯片：点击弹出类型下拉，按所选类型在当前页后新建（缺省自定义页）
@@ -627,7 +665,8 @@ const rootRef = ref<HTMLElement>();
 function onOutsideClick(e: MouseEvent) {
   const target = e.target as Node;
   // 打开中的弹层与其触发按钮视为「内部」：点击它们由各自的 toggle/选择逻辑处理
-  const popup = tablePickerVisible.value
+  // （表格与富表格共用 .vpk-table-picker 弹层，同一时刻只开一个）
+  const popup = tablePickerVisible.value || bizTablePickerVisible.value
     ? rootRef.value?.querySelector('.vpk-table-picker')
     : colorAnchor.value
       ? rootRef.value?.querySelector('.vpk-color-popup')
@@ -640,6 +679,7 @@ function onOutsideClick(e: MouseEvent) {
   }
   if (colorAnchor.value) colorAnchor.value = null;
   if (tablePickerVisible.value) closeTablePicker();
+  if (bizTablePickerVisible.value) closeBizTablePicker();
   if (slideTypeMenuVisible.value) closeSlideTypeMenu();
 }
 onMounted(() => {

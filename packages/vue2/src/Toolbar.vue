@@ -185,19 +185,43 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 组件：媒体 / 业务文本 / 文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
+        <!-- 业务组件：媒体 / 业务文本 -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
-            <button type="button" class="vpk-tool-btn" title="插入媒体（图片 + 下拉 + 业务文本）" @click="insertMediaElement">
+            <button type="button" class="vpk-tool-btn" title="插入照片" @click="insertMediaElement">
               <span class="vpk-icon" v-html="icons.image"></span>
-              <span>媒体</span>
+              <span>照片</span>
             </button>
 
-            <button type="button" class="vpk-tool-btn" title="插入业务文本（支持业务字段混排）" @click="insertBizTextElement">
+            <button type="button" class="vpk-tool-btn" title="插入富文本（支持业务字段混排）" @click="insertBizTextElement">
               <span class="vpk-icon" v-html="icons.text"></span>
-              <span>业务文本</span>
+              <span>富文本</span>
             </button>
 
+            <div class="vpk-tool-anchor">
+              <button type="button" class="vpk-tool-btn" title="插入富表格（单元格支持业务字段混排）" :class="{ active: bizTablePickerVisible }" @click="toggleBizTablePicker($event)">
+                <span class="vpk-icon" v-html="icons.table"></span>
+                <span>富表格</span>
+              </button>
+
+              <!-- 与表格共用行列选择器（biz 模式构造 bizTable 元素） -->
+              <TablePicker
+                v-if="bizTablePickerVisible"
+                :popup-style="bizTablePopupStyle"
+                :doc="doc"
+                biz
+                @insert="emitInsert"
+                @close="closeBizTablePicker"
+              />
+            </div>
+          </div>
+        </div>
+
+        <span class="vpk-group-divider" />
+
+        <!-- 组件：文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
+        <div class="vpk-tool-group">
+          <div class="vpk-group-items">
             <button type="button" class="vpk-tool-btn" title="插入文本" @click="insertTextElement">
               <span class="vpk-icon" v-html="icons.text"></span>
               <span>文本</span>
@@ -292,6 +316,9 @@ export default Vue.extend({
     return {
       activeTab: 'home' as 'home' | 'insert',
       tablePickerVisible: false,
+      // 富表格选择器（与表格共用 TablePicker，两者互斥展开）
+      bizTablePickerVisible: false,
+      bizTablePopupStyle: {} as Record<string, string>,
       // 颜色弹层锚点（null 为收起）
       colorAnchor: null as null | 'fill' | 'fontColor',
       // 弹层用 fixed 定位（相对视口），避免被工具栏的横向滚动容器裁剪
@@ -487,6 +514,7 @@ export default Vue.extend({
     closePopups() {
       this.colorAnchor = null;
       this.closeTablePicker();
+      this.closeBizTablePicker();
       this.closeSlideTypeMenu();
     },
     toggleColorPicker(anchor: 'fill' | 'fontColor', e: Event) {
@@ -565,6 +593,7 @@ export default Vue.extend({
 
     // 表格选择器：网格 / 自定义行列与元素构造在 TablePicker 内
     toggleTablePicker(e: Event) {
+      this.closeBizTablePicker();
       this.tablePickerVisible = !this.tablePickerVisible;
       if (this.tablePickerVisible) this.tablePopupStyle = this.anchorPopupStyle(e, 224);
     },
@@ -572,12 +601,23 @@ export default Vue.extend({
       this.tablePickerVisible = false;
     },
 
+    // 富表格选择器：与表格共用 TablePicker（biz 模式），两者互斥展开
+    toggleBizTablePicker(e: Event) {
+      this.closeTablePicker();
+      this.bizTablePickerVisible = !this.bizTablePickerVisible;
+      if (this.bizTablePickerVisible) this.bizTablePopupStyle = this.anchorPopupStyle(e, 224);
+    },
+    closeBizTablePicker() {
+      this.bizTablePickerVisible = false;
+    },
+
     // 点击「打开中的弹层及其触发按钮」之外时收起：
     // 包括工具栏内其他区域、画布与页面任意位置（捕获阶段监听，画布元素 stopPropagation 也不影响）
     onOutsideClick(e: MouseEvent) {
       const target = e.target as Node;
       // 打开中的弹层与其触发按钮视为「内部」：点击它们由各自的 toggle/选择逻辑处理
-      const popup = this.tablePickerVisible
+      // （表格与富表格共用 .vpk-table-picker 弹层，同一时刻只开一个）
+      const popup = this.tablePickerVisible || this.bizTablePickerVisible
         ? (this.$el as HTMLElement).querySelector('.vpk-table-picker')
         : this.colorAnchor
           ? (this.$el as HTMLElement).querySelector('.vpk-color-popup')
@@ -590,6 +630,7 @@ export default Vue.extend({
       }
       if (this.colorAnchor) this.colorAnchor = null;
       if (this.tablePickerVisible) this.closeTablePicker();
+      if (this.bizTablePickerVisible) this.closeBizTablePicker();
       if (this.slideTypeMenuVisible) this.closeSlideTypeMenu();
     },
   },

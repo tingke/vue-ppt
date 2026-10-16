@@ -118,4 +118,12 @@ describe('sanitizeRichText', () => {
     expect(out).toContain('font-size: 16px');
     expect(out).not.toContain('position');
   });
+
+  it('业务字段 tag 保留 vpk-biz-tag class，其余 class 移除', () => {
+    const out = sanitizeRichText('<span data-biz-tag="a/b" class="vpk-biz-tag dirty">方案名称</span><span class="keep-me">x</span>');
+    expect(out).toContain('class="vpk-biz-tag"');
+    expect(out).toContain('data-biz-tag="a/b"');
+    expect(out).not.toContain('dirty');
+    expect(out).not.toContain('keep-me');
+  });
 });

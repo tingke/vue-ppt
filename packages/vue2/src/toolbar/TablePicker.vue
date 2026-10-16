@@ -2,7 +2,7 @@
   <!-- 参考 PPTist TableGenerator：10x10 网格悬停选择行列，支持自定义输入；fixed 定位避免被滚动容器裁剪 -->
   <div class="vpk-table-picker" :style="popupStyle" @mouseleave="endCell = []">
     <div class="vpk-table-picker-title">
-      <span>{{ isCustom ? '自定义表格' : '表格 ' + (endCell.length ? endCell[0] + ' x ' + endCell[1] : '') }}</span>
+      <span>{{ isCustom ? '自定义' + typeName : typeName + ' ' + (endCell.length ? endCell[0] + ' x ' + endCell[1] : '') }}</span>
       <span class="vpk-table-picker-actions">
         <button type="button" class="vpk-table-picker-toggle" @click="isCustom = !isCustom">{{ isCustom ? '返回' : '自定义' }}</button>
         <span class="vpk-table-picker-close" @click="$emit('close')">×</span>
@@ -41,7 +41,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { createTableElement, PptDocumentModel, PptTableElement } from '@vue-ppt-kit/core';
+import { createBizTableElement, createTableElement, PptBizTableElement, PptDocumentModel, PptTableElement } from '@vue-ppt-kit/core';
 
 // 表格行列选择器：网格 / 自定义行列，元素构造走 core 工厂（双端一致）
 export default Vue.extend({
@@ -50,6 +50,8 @@ export default Vue.extend({
     /** 弹层 fixed 定位坐标（父组件依据触发按钮计算） */
     popupStyle: { type: Object, default: () => ({}) },
     doc: { type: Object as () => PptDocumentModel, required: true },
+    // 富表格模式：插入 bizTable 元素（单元格为业务文本）
+    biz: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -60,6 +62,11 @@ export default Vue.extend({
       customCol: 3,
     };
   },
+  computed: {
+    typeName(): string {
+      return this.biz ? '富表格' : '表格';
+    },
+  },
   methods: {
     insertCustomTable() {
       const row = Math.min(20, Math.max(1, Math.round(this.customRow) || 1));
@@ -68,7 +75,9 @@ export default Vue.extend({
       this.isCustom = false;
     },
     insertTableElement(row: number, col: number) {
-      const table: PptTableElement = createTableElement(row, col, this.doc);
+      const table: PptTableElement | PptBizTableElement = this.biz
+        ? createBizTableElement(this.doc, row, col)
+        : createTableElement(row, col, this.doc);
       this.$emit('insert', table);
       this.$emit('close');
     },

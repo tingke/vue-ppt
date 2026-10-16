@@ -15,7 +15,14 @@ export interface PptSlideModel {
   slideType?: PptSlideType;
 }
 
-export type PptElementModel = PptTextElement | PptBizTextElement | PptImageElement | PptShapeElement | PptTableElement | PptMediaElement;
+export type PptElementModel =
+  | PptTextElement
+  | PptBizTextElement
+  | PptImageElement
+  | PptShapeElement
+  | PptTableElement
+  | PptBizTableElement
+  | PptMediaElement;
 
 export interface PptBaseElement {
   id: string;
@@ -120,6 +127,14 @@ export interface PptTableElement extends PptBaseElement {
 }
 
 /**
+ * 富表格（业务组件）：结构与表格一致，单元格为业务文本（BizTextElement），
+ * 支持普通文本与业务字段 tag 混排（text 同 bizText 的受限内联 HTML）。
+ */
+export interface PptBizTableElement extends Omit<PptTableElement, 'type'> {
+  type: 'bizTable';
+}
+
+/**
  * 移除富文本内联 HTML 中指定类型的样式声明（如 color / font-weight）。
  * 用于整元素级样式覆盖：文字一旦被富文本染色/加粗，内联优先级会压过
  * 元素级属性，工具栏整元素设置将失效；故整元素操作前先清除同类内联。
@@ -194,6 +209,13 @@ export function sanitizeRichText(html: string): string {
       Array.from(el.attributes).forEach((attr) => {
         // 业务字段 tag 标记：整体保留（标签文字为子文本节点，天然保留）
         if (attr.name === 'data-biz-tag' && el.tagName === 'SPAN') return;
+        // 业务字段 tag 的芯片样式钩子：class 仅保留 vpk-biz-tag（静态渲染与编辑态外观一致）
+        if (attr.name === 'class' && el.tagName === 'SPAN' && el.hasAttribute('data-biz-tag')) {
+          const kept = attr.value.split(/\s+/).filter((c) => c === 'vpk-biz-tag').join(' ');
+          if (kept) el.setAttribute('class', kept);
+          else el.removeAttribute('class');
+          return;
+        }
         if (attr.name === 'style' && el.tagName === 'SPAN') {
           const kept = (attr.value.match(RICH_ALLOWED_STYLE) || []).join('; ');
           if (kept) el.setAttribute('style', kept);

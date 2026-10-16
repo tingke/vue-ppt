@@ -7,6 +7,7 @@ import MediaElement from './MediaElement.vue';
 import ImageElement from './ImageElement.vue';
 import ShapeElement from './ShapeElement.vue';
 import TableElement from './TableElement.vue';
+import BizTableElement from './BizTableElement.vue';
 
 export const elementComponentMap: Record<string, Component> = {
   text: TextElement,
@@ -15,4 +16,5 @@ export const elementComponentMap: Record<string, Component> = {
   image: ImageElement,
   shape: ShapeElement,
   table: TableElement,
+  bizTable: BizTableElement,
 };

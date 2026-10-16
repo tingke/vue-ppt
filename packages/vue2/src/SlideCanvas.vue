@@ -24,10 +24,11 @@
           :element="el"
           :scale="scale"
           :editing="el.id === editingId"
-          :static="el.type === 'text' || el.type === 'bizText' || el.type === 'media' ? static : undefined"
+          :static="staticElementTypes.includes(el.type) ? static : undefined"
           @commit="onTextCommit(el, $event)"
           @update="onTextUpdate(el, $event)"
           @option="onMediaOption(el, $event)"
+          @cell-update="onTableCellUpdate(el, $event)"
         />
 
         <!-- 选中缩放手柄（参考 PPTist Operate 层；文本元素仅左右两点） -->
@@ -65,6 +66,7 @@ import {
   AlignLineView,
   PptElementModel,
   PptMediaElement,
+  PptTableCell,
   ResizeDirection,
 } from '@vue-ppt-kit/core';
 import { elementComponentMap } from './elements';
@@ -110,6 +112,8 @@ export default Vue.extend({
       dragContext: null as DragContext | null,
       resizeContext: null as ResizeContext | null,
       alignLineViews: [] as AlignLineView[],
+      // 静态渲染透传的元素类型（缩略图等场景组件内不建交互/编辑实例）
+      staticElementTypes: ['text', 'bizText', 'media', 'table', 'bizTable'],
     };
   },
   computed: {
@@ -362,6 +366,11 @@ export default Vue.extend({
     // 媒体下拉级联选中：回写 optionPath（完整路径）
     onMediaOption(el: PptElementModel, payload: { optionPath: string }) {
       this.$emit('element-update', { id: el.id, patch: { optionPath: payload.optionPath } });
+    },
+
+    // 表格单元格编辑提交：回写 data（二维数组），经 element-update 写入 store
+    onTableCellUpdate(el: PptElementModel, data: PptTableCell[][]) {
+      this.$emit('element-update', { id: el.id, patch: { data } });
     },
   },
 });

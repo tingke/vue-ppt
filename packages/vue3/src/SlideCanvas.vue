@@ -25,10 +25,11 @@
           :element="el"
           :scale="scale"
           :editing="el.id === editingId"
-          :static="el.type === 'text' || el.type === 'bizText' || el.type === 'media' ? static : undefined"
+          :static="STATIC_ELEMENT_TYPES.includes(el.type) ? static : undefined"
           @commit="onTextCommit(el, $event)"
           @update="onTextUpdate(el, $event)"
           @option="onMediaOption(el, $event)"
+          @cell-update="onTableCellUpdate(el, $event)"
         />
 
         <!-- 选中缩放手柄（参考 PPTist Operate 层；文本元素仅左右两点） -->
@@ -67,6 +68,7 @@ import {
   type PptElementModel,
   type PptMediaElement,
   type PptSlideModel,
+  type PptTableCell,
   type ResizeDirection,
 } from '@vue-ppt-kit/core';
 import { elementComponentMap } from './elements';
@@ -117,6 +119,9 @@ function elementStyle(el: PptElementModel): CSSProperties {
 
 // 隐藏元素不渲染（如媒体关联的业务文本经右键隐藏）
 const visibleElements = computed<PptElementModel[]>(() => (props.slide?.elements ?? []).filter((e) => !e.hidden));
+
+// 静态渲染透传的元素类型（缩略图等场景组件内不建交互/编辑实例）
+const STATIC_ELEMENT_TYPES = ['text', 'bizText', 'media', 'table', 'bizTable'];
 
 // 选中媒体时同步高亮其关联的业务文本（反之不联动）
 const selectedLinkedId = computed<string | undefined>(() => {
@@ -368,6 +373,11 @@ function onTextUpdate(el: PptElementModel, payload: { text: string; height: numb
 // 媒体下拉级联选中：回写 optionPath（完整路径）
 function onMediaOption(el: PptElementModel, payload: { optionPath: string }) {
   emit('element-update', { id: el.id, patch: { optionPath: payload.optionPath } });
+}
+
+// 表格单元格编辑提交：回写 data（二维数组），经 element-update 写入 store
+function onTableCellUpdate(el: PptElementModel, data: PptTableCell[][]) {
+  emit('element-update', { id: el.id, patch: { data } });
 }
 
 onUnmounted(() => {

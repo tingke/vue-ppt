@@ -3,7 +3,7 @@
  * 工具栏「插入」只负责选类型与时机，元素的默认尺寸 / 样式 / 位置统一在此维护，
  * 保证双端插入行为一致。图片文件读取工具也集中在此。
  */
-import type { PptBizTextElement, PptImageElement, PptMediaElement, PptTableElement, PptTableCell, PptTextElement } from './index';
+import type { PptBizTableElement, PptBizTextElement, PptImageElement, PptMediaElement, PptTableElement, PptTableCell, PptTextElement } from './index';
 
 let idCounter = 0;
 
@@ -128,6 +128,11 @@ export function createTableElement(row: number, col: number, doc: DocSize): PptT
     fontSize: 14,
     color: '#606266',
   };
+}
+
+/** 插入富表格元素：结构与表格一致（单元格为业务文本，支持 fx 业务字段混排），默认 3x3 */
+export function createBizTableElement(doc: DocSize, row = 3, col = 3): PptBizTableElement {
+  return { ...createTableElement(row, col, doc), type: 'bizTable' };
 }
 
 /** 加载图片并获取原始尺寸（dataURL / 图片链接均可） */
