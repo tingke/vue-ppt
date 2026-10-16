@@ -1,5 +1,5 @@
 {
-  "name": "@vue-ppt/vue2",
+  "name": "@tthappy/ppt-vue2",
   "version": "0.1.0",
   "main": "./dist/vue-ppt-vue2.common.js",
   "module": "./dist/vue-ppt-vue2.common.js",
@@ -26,7 +26,7 @@
     "vue-template-compiler": "2.6.14"
   },
   "dependencies": {
-    "@vue-ppt/core": "workspace:*",
+    "@tthappy/ppt-core": "workspace:*",
     "vuedraggable": "2.24.3"
   }
 }

@@ -4,7 +4,7 @@
  * 与 packages/vue2/src/useSlides.ts 为同构实现，修改时请双端同步。
  */
 import { reactive, computed } from 'vue';
-import { createEmptyDocument, genId, type PptDocumentModel, type PptSlideModel, type PptElementModel, type PptSlideType } from '@vue-ppt/core';
+import { createEmptyDocument, genId, type PptDocumentModel, type PptSlideModel, type PptElementModel, type PptSlideType } from '@tthappy/ppt-core';
 
 // 元素 / 页面深拷贝：doc 为 reactive Proxy，structuredClone 无法克隆（DataCloneError），
 // 统一走 JSON 序列化（元素模型字段均为 JSON 兼容类型，vue2 端同款实现）

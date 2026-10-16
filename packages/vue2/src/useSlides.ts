@@ -5,7 +5,7 @@
  */
 import Vue from 'vue';
 import { computed, reactive } from '@vue/composition-api';
-import { createEmptyDocument, genId, PptDocumentModel, PptElementModel, PptSlideType } from '@vue-ppt/core';
+import { createEmptyDocument, genId, PptDocumentModel, PptElementModel, PptSlideType } from '@tthappy/ppt-core';
 
 interface SlidesState {
   doc: PptDocumentModel;
@@ -33,7 +33,7 @@ interface SlidesState {
   pasteElement: () => void;
 }
 
-// genId / 元素工厂 / 预设等共享逻辑由 @vue-ppt/core 提供（双端一致）
+// genId / 元素工厂 / 预设等共享逻辑由 @tthappy/ppt-core 提供（双端一致）
 // 注：克隆沿用 JSON 深拷贝（vue2 需兼容不支持 structuredClone 的旧浏览器）
 
 export function useSlides(options?: { document?: PptDocumentModel }): SlidesState {

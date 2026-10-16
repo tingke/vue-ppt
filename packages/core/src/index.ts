@@ -1,5 +1,5 @@
 /**
- * @vue-ppt/core：框架无关的核心包（vue2 / vue3 双端共享）。
+ * @tthappy/ppt-core：框架无关的核心包（vue2 / vue3 双端共享）。
  *
  * 内容：
  * - 文档模型：PptDocumentModel / PptSlideModel / PptElementModel 及各元素类型定义

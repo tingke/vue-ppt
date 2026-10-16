@@ -416,7 +416,7 @@ import {
   type PptTextAlign,
   type PptTextElement,
   type RichTextState,
-} from '@vue-ppt/core';
+} from '@tthappy/ppt-core';
 import type { useSlides } from '../useSlides';
 import { sharedEmitter } from '../emitter';
 import ColorPopup from './ColorPopup.vue';

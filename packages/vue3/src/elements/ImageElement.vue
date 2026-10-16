@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PptImageElement } from '@vue-ppt/core';
+import type { PptImageElement } from '@tthappy/ppt-core';
 
 // 纯静态渲染图片元素
 defineProps<{

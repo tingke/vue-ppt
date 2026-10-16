@@ -68,8 +68,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive } from 'vue';
 import Draggable from 'vuedraggable';
-import { getSlideTypeLabel, SLIDE_TYPES } from '@vue-ppt/core';
-import type { PptDocumentModel, PptSlideType } from '@vue-ppt/core';
+import { getSlideTypeLabel, SLIDE_TYPES } from '@tthappy/ppt-core';
+import type { PptDocumentModel, PptSlideType } from '@tthappy/ppt-core';
 import SlideCanvas from './SlideCanvas.vue';
 
 interface MenuItem {

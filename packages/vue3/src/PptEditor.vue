@@ -104,7 +104,7 @@ import {
   type PptDocumentModel,
   type PptElementModel,
   type PptMediaElement,
-} from '@vue-ppt/core';
+} from '@tthappy/ppt-core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
 import { BIZ_VARIABLES_KEY, MEDIA_OPTIONS_KEY } from './emitter';

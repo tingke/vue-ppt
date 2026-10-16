@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
-import { PALETTE } from '@vue-ppt/core';
+import { PALETTE } from '@tthappy/ppt-core';
 
 // @mousedown.prevent 保持编辑区焦点与选区（编辑态下设置字体颜色时不打断选区）
 defineProps<{

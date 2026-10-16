@@ -1,9 +1,9 @@
 /**
- * @vue-ppt/vue3：面向 Vue 3 的 PPT 编辑器组件包（Element Plus）。
+ * @tthappy/ppt-vue3：面向 Vue 3 的 PPT 编辑器组件包（Element Plus）。
  *
  * 主入口为 PptEditor（工具栏 + 缩略图 + 画布的完整编辑器）；
  * SlideCanvas / SlideThumbnails / Toolbar 亦可单独引入做轻量集成。
- * 依赖 @vue-ppt/core 提供文档模型与算法，样式经 '@vue-ppt/vue3/style.css' 引入。
+ * 依赖 @tthappy/ppt-core 提供文档模型与算法，样式经 '@tthappy/ppt-vue3/style.css' 引入。
  */
 import type { App } from 'vue';
 import PptEditor from './PptEditor.vue';

@@ -68,7 +68,7 @@ import {
   PptMediaElement,
   PptTableCell,
   ResizeDirection,
-} from '@vue-ppt/core';
+} from '@tthappy/ppt-core';
 import { elementComponentMap } from './elements';
 
 interface DragContext {

@@ -6,7 +6,7 @@
   </main>
 </template>
 <script setup lang="ts">
-import type { PptBizVariableNode, PptDocumentModel } from '@vue-ppt/core';
+import type { PptBizVariableNode, PptDocumentModel } from '@tthappy/ppt-core';
 
 // 业务变量树（参考需求图 2）：业务文本组件 fx 级联选择数据源
 const DATE_FORMATS: PptBizVariableNode[] = ['yyyy-mm-dd', 'yyyy-m-d', 'yyyy/m/d', 'yyyy/mm/dd', 'yyyy年m月d日', 'yy-mm-dd', 'm/d', 'mm.dd', 'm.d', 'mmdd']

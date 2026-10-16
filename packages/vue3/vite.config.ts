@@ -12,7 +12,7 @@ export default defineConfig({
       cssFileName: "style",
     },
     rollupOptions: {
-      external: ["vue", "@vue-ppt/core", "vuedraggable"],
+      external: ["vue", "@tthappy/ppt-core", "vuedraggable"],
       output: { globals: { vue: "Vue", vuedraggable: "vuedraggable" } },
     },
   },

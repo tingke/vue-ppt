@@ -27,7 +27,7 @@ import {
   type RichTextState,
   sanitizeRichText,
   type PptTextElement,
-} from '@vue-ppt/core';
+} from '@tthappy/ppt-core';
 import { sharedEmitter } from '../emitter';
 import RichEditor from './RichEditor.vue';
 

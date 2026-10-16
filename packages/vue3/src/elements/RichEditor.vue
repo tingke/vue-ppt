@@ -5,7 +5,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { TextEditor, type RichTextAction, type RichTextState } from '@vue-ppt/core';
+import { TextEditor, type RichTextAction, type RichTextState } from '@tthappy/ppt-core';
 
 const props = withDefaults(defineProps<{
   /** 受限白名单内联 HTML（PptTextElement.text），纯文本天然兼容 */

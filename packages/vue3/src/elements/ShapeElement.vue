@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { computed, type CSSProperties } from 'vue';
-import type { PptShapeElement } from '@vue-ppt/core';
+import type { PptShapeElement } from '@tthappy/ppt-core';
 
 // 纯静态渲染形状元素
 const props = defineProps<{

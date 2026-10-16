@@ -5,7 +5,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { TextEditor, RichTextAction, RichTextState } from '@vue-ppt/core';
+import { TextEditor, RichTextAction, RichTextState } from '@tthappy/ppt-core';
 
 // ProseMirror 薄封装：初始化/销毁由本组件管理，命令经 execCommand 暴露给父组件
 export default Vue.extend({

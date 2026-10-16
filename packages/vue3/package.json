@@ -1,5 +1,5 @@
 {
-  "name": "@vue-ppt/vue3",
+  "name": "@tthappy/ppt-vue3",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -31,7 +31,7 @@
     "vue-tsc": "^2.0.29"
   },
   "dependencies": {
-    "@vue-ppt/core": "workspace:*",
+    "@tthappy/ppt-core": "workspace:*",
     "vuedraggable": "^4.1.0"
   }
 }

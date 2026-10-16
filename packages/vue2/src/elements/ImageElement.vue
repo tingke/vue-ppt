@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { PptImageElement } from '@vue-ppt/core';
+import { PptImageElement } from '@tthappy/ppt-core';
 
 // 纯静态渲染图片元素
 export default Vue.extend({

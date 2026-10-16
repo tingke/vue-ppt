@@ -41,7 +41,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { createBizTableElement, createTableElement, PptBizTableElement, PptDocumentModel, PptTableElement } from '@vue-ppt/core';
+import { createBizTableElement, createTableElement, PptBizTableElement, PptDocumentModel, PptTableElement } from '@tthappy/ppt-core';
 
 // 表格行列选择器：网格 / 自定义行列，元素构造走 core 工厂（双端一致）
 export default Vue.extend({

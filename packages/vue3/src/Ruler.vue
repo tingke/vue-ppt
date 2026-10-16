@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import { computeRulerTicks } from '@vue-ppt/core';
+import { computeRulerTicks } from '@tthappy/ppt-core';
 
 // 刻度密度随缩放自适应：步长像素（step x canvasScale）< 36 时隐藏数字、< 72 时隐藏中点刻度
 const props = defineProps({

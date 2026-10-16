@@ -44,7 +44,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { sanitizeRichText, PptBizTableElement, PptBizTextElement, PptTableCell, PptTableElement, PptTextElement } from '@vue-ppt/core';
+import { sanitizeRichText, PptBizTableElement, PptBizTextElement, PptTableCell, PptTableElement, PptTextElement } from '@tthappy/ppt-core';
 import TextElement from './TextElement.vue';
 import BizTextElement from './BizTextElement.vue';
 

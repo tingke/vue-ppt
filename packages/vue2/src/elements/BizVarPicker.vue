@@ -42,7 +42,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import type { PptBizVariableNode } from '@vue-ppt/core';
+import type { PptBizVariableNode } from '@tthappy/ppt-core';
 
 interface FlatItem {
   node: PptBizVariableNode;

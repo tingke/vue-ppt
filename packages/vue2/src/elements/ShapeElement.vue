@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { PptShapeElement } from '@vue-ppt/core';
+import { PptShapeElement } from '@tthappy/ppt-core';
 
 // 纯静态渲染形状元素
 export default Vue.extend({

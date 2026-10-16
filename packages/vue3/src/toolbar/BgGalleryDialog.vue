@@ -37,7 +37,7 @@ import {
   readFileAsDataURL,
   type PptDocumentModel,
   type PptImageElement,
-} from '@vue-ppt/core';
+} from '@tthappy/ppt-core';
 
 // 组件常驻（仅 overlay 随 visible 显隐），上传的图库列表在多次开关间保留；
 // 每次打开时清空已选

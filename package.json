@@ -6,11 +6,11 @@
   "scripts": {
     "dev:vue2": "pnpm --dir playground/vue2-app serve",
     "dev:vue3": "pnpm --dir playground/vue3-app dev",
-    "build:core": "pnpm --filter @vue-ppt/core build",
-    "build:vue2": "pnpm --filter @vue-ppt/vue2 build",
-    "build:vue3": "pnpm --filter @vue-ppt/vue3 build",
+    "build:core": "pnpm --filter @tthappy/ppt-core build",
+    "build:vue2": "pnpm --filter @tthappy/ppt-vue2 build",
+    "build:vue3": "pnpm --filter @tthappy/ppt-vue3 build",
     "build": "pnpm build:core && pnpm build:vue2 && pnpm build:vue3",
-    "typecheck": "pnpm --filter @vue-ppt/core typecheck && pnpm --filter @vue-ppt/vue3 typecheck"
+    "typecheck": "pnpm --filter @tthappy/ppt-core typecheck && pnpm --filter @tthappy/ppt-vue3 typecheck"
   },
   "devDependencies": {
     "typescript": "~5.5.4"

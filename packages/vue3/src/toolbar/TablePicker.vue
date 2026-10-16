@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { CSSProperties } from 'vue';
-import { createBizTableElement, createTableElement, type PptBizTableElement, type PptDocumentModel, type PptTableElement } from '@vue-ppt/core';
+import { createBizTableElement, createTableElement, type PptBizTableElement, type PptDocumentModel, type PptTableElement } from '@tthappy/ppt-core';
 
 const props = defineProps<{
   /** 弹层 fixed 定位坐标（父组件依据触发按钮计算） */

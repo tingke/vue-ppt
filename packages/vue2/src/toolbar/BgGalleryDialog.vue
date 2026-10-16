@@ -31,7 +31,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { createImageElement, loadImage, readFileAsDataURL, PptDocumentModel, PptImageElement } from '@vue-ppt/core';
+import { createImageElement, loadImage, readFileAsDataURL, PptDocumentModel, PptImageElement } from '@tthappy/ppt-core';
 
 // 组件常驻（仅 overlay 随 visible 显隐），上传的图库列表在多次开关间保留；每次打开清空已选
 export default Vue.extend({

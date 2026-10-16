@@ -97,7 +97,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { computed, provide, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api';
-import { createEmitter, EDITOR_EMITTER, createHotkeyHandler, markHotkeyScope as markScope, createMediaTextElement, PptBizVariableNode, PptDocumentModel, PptElementModel, PptMediaElement } from '@vue-ppt/core';
+import { createEmitter, EDITOR_EMITTER, createHotkeyHandler, markHotkeyScope as markScope, createMediaTextElement, PptBizVariableNode, PptDocumentModel, PptElementModel, PptMediaElement } from '@tthappy/ppt-core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
 import { BIZ_VARIABLES_KEY, MEDIA_OPTIONS_KEY } from './emitter';

@@ -50,7 +50,7 @@ importers:
 
   packages/vue2:
     dependencies:
-      '@vue-ppt/core':
+      '@tthappy/ppt-core':
         specifier: workspace:*
         version: link:../core
       vuedraggable:
@@ -84,7 +84,7 @@ importers:
 
   packages/vue3:
     dependencies:
-      '@vue-ppt/core':
+      '@tthappy/ppt-core':
         specifier: workspace:*
         version: link:../core
       vuedraggable:
@@ -109,10 +109,10 @@ importers:
 
   playground/vue2-app:
     dependencies:
-      '@vue-ppt/theme':
+      '@tthappy/ppt-theme':
         specifier: workspace:*
         version: link:../../packages/theme
-      '@vue-ppt/vue2':
+      '@tthappy/ppt-vue2':
         specifier: workspace:*
         version: link:../../packages/vue2
       '@vue/composition-api':
@@ -137,10 +137,10 @@ importers:
 
   playground/vue3-app:
     dependencies:
-      '@vue-ppt/theme':
+      '@tthappy/ppt-theme':
         specifier: workspace:*
         version: link:../../packages/theme
-      '@vue-ppt/vue3':
+      '@tthappy/ppt-vue3':
         specifier: workspace:*
         version: link:../../packages/vue3
       element-plus:

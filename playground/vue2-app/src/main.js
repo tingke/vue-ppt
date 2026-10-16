@@ -1,8 +1,8 @@
 import Vue from 'vue';
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
-import '@vue-ppt/theme';
-import PptKit, { PptStage } from '@vue-ppt/vue2';
+import '@tthappy/ppt-theme';
+import PptKit, { PptStage } from '@tthappy/ppt-vue2';
 import App from './App.vue';
 Vue.use(ElementUI);
 Vue.use(PptKit);

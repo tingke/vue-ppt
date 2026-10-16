@@ -51,7 +51,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { computed } from '@vue/composition-api';
-import { computeRulerTicks } from '@vue-ppt/core';
+import { computeRulerTicks } from '@tthappy/ppt-core';
 
 interface ViewportStyles {
   top: number;

@@ -37,7 +37,7 @@ import {
   type RichTextCommand,
   type RichTextState,
   sanitizeRichText,
-} from '@vue-ppt/core';
+} from '@tthappy/ppt-core';
 import { BIZ_VARIABLES_KEY, sharedEmitter } from '../emitter';
 import RichEditor from './RichEditor.vue';
 import BizVarPicker from './BizVarPicker.vue';

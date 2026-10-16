@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, type PropType } from 'vue';
-import { sanitizeRichText, type PptBizTableElement, type PptBizTextElement, type PptTableCell, type PptTableElement, type PptTextElement } from '@vue-ppt/core';
+import { sanitizeRichText, type PptBizTableElement, type PptBizTextElement, type PptTableCell, type PptTableElement, type PptTextElement } from '@tthappy/ppt-core';
 import TextElement from './TextElement.vue';
 import BizTextElement from './BizTextElement.vue';
 

@@ -70,7 +70,7 @@ import {
   type PptSlideModel,
   type PptTableCell,
   type ResizeDirection,
-} from '@vue-ppt/core';
+} from '@tthappy/ppt-core';
 import { elementComponentMap } from './elements';
 
 const props = withDefaults(defineProps<{

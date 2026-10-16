@@ -21,10 +21,10 @@
 
 | 包 | 说明 |
 | --- | --- |
-| `@vue-ppt/core` | 框架无关核心：文档模型、几何吸附算法、ProseMirror 富文本内核、快捷键、元素工厂、工具栏预设 |
-| `@vue-ppt/vue2` | Vue 2.6 编辑器组件（`PptStage`），基于 `@vue/composition-api` |
-| `@vue-ppt/vue3` | Vue 3 编辑器组件（`PptEditor`） |
-| `@vue-ppt/theme` | 共享 CSS 变量与基础样式 |
+| `@tthappy/ppt-core` | 框架无关核心：文档模型、几何吸附算法、ProseMirror 富文本内核、快捷键、元素工厂、工具栏预设 |
+| `@tthappy/ppt-vue2` | Vue 2.6 编辑器组件（`PptStage`），基于 `@vue/composition-api` |
+| `@tthappy/ppt-vue3` | Vue 3 编辑器组件（`PptEditor`） |
+| `@tthappy/ppt-theme` | 共享 CSS 变量与基础样式 |
 
 组件不依赖任何 UI 框架，样式全部经 `vpk-*` 类名与 CSS 变量实现，可自由与宿主应用的组件库共存。
 
@@ -46,9 +46,9 @@ pnpm dev:vue3   # Vue 3 + Vite
 
 ```ts
 import { createApp } from 'vue';
-import '@vue-ppt/theme';
-import '@vue-ppt/vue3/style.css';
-import PptKit from '@vue-ppt/vue3';
+import '@tthappy/ppt-theme';
+import '@tthappy/ppt-vue3/style.css';
+import PptKit from '@tthappy/ppt-vue3';
 import App from './App.vue';
 
 createApp(App).use(PptKit).mount('#app');
@@ -64,8 +64,8 @@ createApp(App).use(PptKit).mount('#app');
 
 ```js
 import Vue from 'vue';
-import '@vue-ppt/theme';
-import PptKit from '@vue-ppt/vue2';
+import '@tthappy/ppt-theme';
+import PptKit from '@tthappy/ppt-vue2';
 
 Vue.use(PptKit);
 ```
@@ -127,7 +127,7 @@ interface PptSlideModel {
 ```bash
 pnpm build                                # 依次构建 core / vue2 / vue3
 pnpm typecheck                            # core + vue3 类型检查
-pnpm --filter @vue-ppt/core test      # core 单元测试（vitest）
+pnpm --filter @tthappy/ppt-core test      # core 单元测试（vitest）
 ```
 
 ## Vue 2.6 注意事项

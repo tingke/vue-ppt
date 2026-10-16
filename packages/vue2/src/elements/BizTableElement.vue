@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { PptBizTableElement } from '@vue-ppt/core';
+import { PptBizTableElement } from '@tthappy/ppt-core';
 import TableElement from './TableElement.vue';
 
 // 富表格（业务组件）：与表格组件同构（双击单元格编辑），单元格为业务文本（fx 业务字段混排）

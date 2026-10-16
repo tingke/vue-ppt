@@ -24,7 +24,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import type { PptBizVariableNode, PptMediaElement } from '@vue-ppt/core';
+import type { PptBizVariableNode, PptMediaElement } from '@tthappy/ppt-core';
 import { MEDIA_OPTIONS_KEY } from '../emitter';
 import BizVarPicker from './BizVarPicker.vue';
 
