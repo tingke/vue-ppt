@@ -20,7 +20,7 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 编辑：复制 / 粘贴 -->
+        <!-- 编辑：复制 / 粘贴 / 标尺 / 参考线 -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
             <button
@@ -40,6 +40,28 @@
               @click="state?.pasteElement()"
             >
               <span class="vpk-icon" v-html="ICONS.paste"></span>
+            </button>
+
+            <!-- 编辑辅助：标尺 / 参考线显隐（状态在 useSlides，画布容器消费） -->
+            <button
+              type="button"
+              class="vpk-icon-btn"
+              title="标尺"
+              :disabled="!state"
+              :class="{ active: !!state?.showRuler.value }"
+              @click="toggleRuler"
+            >
+              <span class="vpk-icon" v-html="ICONS.ruler"></span>
+            </button>
+            <button
+              type="button"
+              class="vpk-icon-btn"
+              title="参考线"
+              :disabled="!state"
+              :class="{ active: !!state?.showGuides.value }"
+              @click="toggleGuides"
+            >
+              <span class="vpk-icon" v-html="ICONS.guide"></span>
             </button>
           </div>
         </div>
@@ -395,11 +417,11 @@ import {
   type PptTextElement,
   type RichTextState,
 } from '@vue-ppt-kit/core';
-import type { useSlides } from './useSlides';
-import { sharedEmitter } from './emitter';
-import ColorPopup from './toolbar/ColorPopup.vue';
-import TablePicker from './toolbar/TablePicker.vue';
-import BgGalleryDialog from './toolbar/BgGalleryDialog.vue';
+import type { useSlides } from '../useSlides';
+import { sharedEmitter } from '../emitter';
+import ColorPopup from './ColorPopup.vue';
+import TablePicker from './TablePicker.vue';
+import BgGalleryDialog from './BgGalleryDialog.vue';
 
 type SlidesState = ReturnType<typeof useSlides>;
 
@@ -480,6 +502,14 @@ const ICONS = TOOLBAR_ICONS;
 
 // ==================== 编辑（复制 / 粘贴） ====================
 // 复制：暂存到内部剪贴板（参考 PPTist mainStore clipboard）；粘贴：克隆插入当前页
+
+// 标尺 / 参考线显隐切换（编辑辅助 UI，状态在 useSlides）
+function toggleRuler() {
+  if (state.value) state.value.showRuler.value = !state.value.showRuler.value;
+}
+function toggleGuides() {
+  if (state.value) state.value.showGuides.value = !state.value.showGuides.value;
+}
 
 // ==================== 字体 / 段落 ====================
 // 候选项（字体 / 字号 / 行距 / 对齐 / 排列）由 core 预设共享，双端一致

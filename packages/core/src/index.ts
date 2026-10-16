@@ -240,5 +240,7 @@ export * from './emitter';
 export * from './presets';
 export * from './factory';
 export * from './geometry';
+export * from './hotkeys';
+export * from './ruler';
 export * from './richeditor';
 export * from './icons';

@@ -22,7 +22,7 @@
 
         <span class="vpk-group-divider" />
 
-        <!-- 编辑：复制 / 粘贴 -->
+        <!-- 编辑：复制 / 粘贴 / 标尺 / 参考线 -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
             <button type="button" class="vpk-icon-btn" title="复制" :disabled="!selectedEl" @click="copyToClipboard">
@@ -30,6 +30,14 @@
             </button>
             <button type="button" class="vpk-icon-btn" title="粘贴" :disabled="!hasClipboard" @click="pasteFromClipboard">
               <span class="vpk-icon" v-html="icons.paste"></span>
+            </button>
+
+            <!-- 编辑辅助：标尺 / 参考线显隐（状态在 useSlides，画布容器消费） -->
+            <button type="button" class="vpk-icon-btn" title="标尺" :disabled="!state" :class="{ active: state && state.showRuler.value }" @click="toggleRuler">
+              <span class="vpk-icon" v-html="icons.ruler"></span>
+            </button>
+            <button type="button" class="vpk-icon-btn" title="参考线" :disabled="!state" :class="{ active: state && state.showGuides.value }" @click="toggleGuides">
+              <span class="vpk-icon" v-html="icons.guide"></span>
             </button>
           </div>
         </div>
@@ -510,6 +518,14 @@ export default Vue.extend({
       const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
       return { left: left + 'px', top: rect.bottom + 6 + 'px' };
     },
+    // 标尺 / 参考线显隐切换（编辑辅助 UI，状态在 useSlides）
+    toggleRuler() {
+      if (this.state) this.state.showRuler.value = !this.state.showRuler.value;
+    },
+    toggleGuides() {
+      if (this.state) this.state.showGuides.value = !this.state.showGuides.value;
+    },
+
     // 工具栏横向滚动时收起弹层，避免弹层与触发按钮错位
     closePopups() {
       this.colorAnchor = null;

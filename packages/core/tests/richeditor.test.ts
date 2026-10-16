@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseContent, serializeDoc } from '../src/richeditor/schema';
 import { sanitizeRichText, stripRichTextStyle } from '../src/index';
+import { TextEditor } from '../src/richeditor/controller';
 
 describe('schema parse/serialize', () => {
   it('纯文本自动包裹段落', () => {
@@ -14,6 +15,23 @@ describe('schema parse/serialize', () => {
     const doc = parseContent('');
     expect(doc.textContent).toBe('');
     expect(serializeDoc(doc)).toBe('<p></p>');
+  });
+
+  it('业务字段 tag 序列化往返：key / label / 芯片 class 保留', () => {
+    const doc = parseContent('<p>前<span data-biz-tag="特殊照/系统社区/拍照第1张">拍照第1张</span>后</p>');
+    // 原子节点的 textContent 不含 label（isEmpty 因此需遍历节点找 tag）
+    expect(doc.textContent).toBe('前后');
+    const html = serializeDoc(doc);
+    expect(html).toContain('data-biz-tag="特殊照/系统社区/拍照第1张"');
+    expect(html).toContain('class="vpk-biz-tag"');
+    expect(html).toContain('>拍照第1张</span>');
+  });
+
+  it('tag 为原子节点：嵌在段落内 inline 参与排版', () => {
+    const doc = parseContent('<p><span data-biz-tag="a/b">标签</span></p>');
+    const para = doc.firstChild!;
+    expect(para.childCount).toBe(1);
+    expect(para.firstChild!.type.name).toBe('biz_tag');
   });
 
   it('span style 加粗往返', () => {
@@ -125,5 +143,17 @@ describe('sanitizeRichText', () => {
     expect(out).toContain('data-biz-tag="a/b"');
     expect(out).not.toContain('dirty');
     expect(out).not.toContain('keep-me');
+  });
+});
+
+describe('TextEditor isEmpty（checkEmptyText 语义）', () => {
+  it('空文档为空；仅含业务 tag 的文档非空（textContent 为空但内容存在）', () => {
+    const dom = document.createElement('div');
+    const editor = TextEditor.create({ dom, content: '', editable: false, scale: 1 });
+    expect(editor.isEmpty()).toBe(true);
+    editor.insertBizTag({ key: 'a/b', label: '标签' });
+    expect(editor.isEmpty()).toBe(false);
+    expect(editor.getContent()).toContain('data-biz-tag="a/b"');
+    editor.destroy();
   });
 });

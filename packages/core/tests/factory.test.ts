@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createBizTableElement,
+  createBizTextElement,
   createImageElement,
+  createMediaElement,
+  createMediaTextElement,
   createTableElement,
   createTextElement,
   genId,
@@ -76,5 +80,60 @@ describe('createTableElement', () => {
     const a = createTableElement(8, 8, doc);
     const ids = new Set(a.data.flat().map((c) => c.id));
     expect(ids.size).toBe(64);
+  });
+});
+
+describe('createBizTextElement', () => {
+  it('默认尺寸 / 样式与文本元素一致，仅 type 为 bizText', () => {
+    const el = createBizTextElement(doc);
+    expect(el.type).toBe('bizText');
+    expect(el.width).toBe(480);
+    expect(el.height).toBe(60);
+    expect(el.x).toBe((960 - 480) / 2);
+    expect(el.y).toBe((540 - 60) / 2);
+    expect(el.fontSize).toBe(20);
+  });
+});
+
+describe('createMediaElement / createMediaTextElement', () => {
+  it('媒体 3:4 占比 200 宽并居中，不预置 src / optionPath / textId', () => {
+    const el = createMediaElement(doc);
+    expect(el.type).toBe('media');
+    expect(el.width).toBe(200);
+    expect(el.height).toBe(267);
+    expect(el.x).toBe((960 - 200) / 2);
+    // height 267 经工厂 Math.round，y 同样取整：(540-267)/2=136.5 → 137
+    expect(el.y).toBe(137);
+    expect('src' in el).toBe(false);
+    expect('optionPath' in el).toBe(false);
+    expect('textId' in el).toBe(false);
+  });
+
+  it('关联业务文本位于媒体正下方、同宽、高 44', () => {
+    const media = createMediaElement(doc);
+    const text = createMediaTextElement(media);
+    expect(text.type).toBe('bizText');
+    expect(text.x).toBe(media.x);
+    expect(text.y).toBe(media.y + media.height + 12);
+    expect(text.width).toBe(media.width);
+    expect(text.height).toBe(44);
+    expect(text.id).not.toBe(media.id);
+  });
+});
+
+describe('createBizTableElement', () => {
+  it('默认 3x3，结构与表格一致仅 type 为 bizTable', () => {
+    const el = createBizTableElement(doc);
+    expect(el.type).toBe('bizTable');
+    expect(el.data.length).toBe(3);
+    expect(el.data[0].length).toBe(3);
+    expect(el.colWidths).toEqual([1 / 3, 1 / 3, 1 / 3]);
+  });
+
+  it('自定义行列与表格工厂同构', () => {
+    const el = createBizTableElement(doc, 2, 5);
+    expect(el.data.length).toBe(2);
+    expect(el.data[0].length).toBe(5);
+    expect(el.width).toBe(createTableElement(2, 5, doc).width);
   });
 });
