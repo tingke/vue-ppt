@@ -1,10 +1,19 @@
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import { resolve } from 'node:path';
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import { resolve } from "node:path";
 export default defineConfig({
   plugins: [vue()],
   build: {
-    lib: { entry: resolve(__dirname, 'src/index.ts'), name: 'VuePptKitVue3', formats: ['es', 'cjs'], fileName: (format) => format === 'es' ? 'index.js' : 'index.cjs', cssFileName: 'style' },
-    rollupOptions: { external: ['vue', '@vue-ppt-kit/core', 'vuedraggable'], output: { globals: { vue: 'Vue', vuedraggable: 'vuedraggable' } } }
-  }
+    lib: {
+      entry: resolve(__dirname, "src/index.ts"),
+      name: "VuePptKitVue3",
+      formats: ["es", "cjs"],
+      fileName: (format) => (format === "es" ? "index.js" : "index.cjs"),
+      cssFileName: "style",
+    },
+    rollupOptions: {
+      external: ["vue", "@vue-ppt-kit/core", "vuedraggable"],
+      output: { globals: { vue: "Vue", vuedraggable: "vuedraggable" } },
+    },
+  },
 });
