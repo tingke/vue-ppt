@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { clampGuideValue } from '@vue-ppt-kit/core';
+import { clampGuideValue } from '@vue-ppt/core';
 
 const props = withDefaults(defineProps<{
   /** 文档尺寸（拖动范围边界） */

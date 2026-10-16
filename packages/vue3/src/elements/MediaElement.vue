@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { computed, inject, ref, type CSSProperties } from 'vue';
-import type { PptBizVariableNode, PptMediaElement } from '@vue-ppt-kit/core';
+import type { PptBizVariableNode, PptMediaElement } from '@vue-ppt/core';
 import { MEDIA_OPTIONS_KEY } from '../emitter';
 import BizVarPicker from './BizVarPicker.vue';
 

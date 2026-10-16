@@ -66,7 +66,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import Draggable from 'vuedraggable';
-import { getSlideTypeLabel, PptSlideModel, PptSlideType, SLIDE_TYPES } from '@vue-ppt-kit/core';
+import { getSlideTypeLabel, PptSlideModel, PptSlideType, SLIDE_TYPES } from '@vue-ppt/core';
 import SlideCanvas from './SlideCanvas.vue';
 
 interface MenuItem {
@@ -157,7 +157,7 @@ export default Vue.extend({
     fillDigit(n: number): string {
       return String(n).padStart(2, '0');
     },
-    // 拖拽排序：参考 PPTist handleDragEnd
+    // 拖拽排序
     onDragEnd(eventData: { newIndex?: number; oldIndex?: number }) {
       const newIndex = eventData.newIndex || 0;
       const oldIndex = eventData.oldIndex || 0;

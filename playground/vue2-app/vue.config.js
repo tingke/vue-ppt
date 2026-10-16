@@ -1,1 +1,1 @@
-module.exports = { transpileDependencies: ['@vue-ppt-kit'] }
+module.exports = { transpileDependencies: ['@vue-ppt'] }

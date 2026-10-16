@@ -247,7 +247,7 @@
                 <span>表格</span>
               </button>
 
-              <!-- 参考 PPTist TableGenerator：10x10 网格悬停选择行列，支持自定义输入 -->
+              <!-- 10x10 网格悬停选择行列，支持自定义输入 -->
               <TablePicker
                 v-if="tablePickerVisible"
                 :popup-style="tablePopupStyle"
@@ -297,7 +297,7 @@ import {
   PptTextAlign,
   PptTextElement,
   RichTextState,
-} from '@vue-ppt-kit/core';
+} from '@vue-ppt/core';
 import { useSlides } from './useSlides';
 import { sharedEmitter } from './emitter';
 import ColorPopup from './toolbar/ColorPopup.vue';
@@ -306,7 +306,7 @@ import BgGalleryDialog from './toolbar/BgGalleryDialog.vue';
 
 export type SlidesState = ReturnType<typeof useSlides>;
 
-// Ribbon 工具栏（参考 PPTist CanvasTool + Toolbar 的分组布局），编辑操作直接调用 useSlides 状态
+// Ribbon 工具栏（分组布局），编辑操作直接调用 useSlides 状态
 export default Vue.extend({
   name: 'PptToolbar',
   components: { ColorPopup, TablePicker, BgGalleryDialog },
@@ -435,7 +435,7 @@ export default Vue.extend({
     // ==================== 编辑（复制 / 粘贴 / 新建 / 排列） ====================
     copyToClipboard() {
       if (!this.state || !this.selectedEl) return;
-      // 复制：暂存到内部剪贴板（参考 PPTist mainStore clipboard），不动画布
+      // 复制：暂存到内部剪贴板，不动画布
       this.state.setClipboard(this.selectedEl.id);
     },
     pasteFromClipboard() {
@@ -468,7 +468,7 @@ export default Vue.extend({
       if (!el || !this.state) return;
       this.state.updateElement(el.id, patch);
     },
-    // 富文本命令：编辑态下作用于选中文字（参考 PPTist RICH_TEXT_COMMAND 事件）
+    // 富文本命令：编辑态下作用于选中文字
     // 携带 target（元素 id），编辑器侧仅响应自身元素，防止命令误投递
     // 模板上 @mousedown.prevent 保持编辑区焦点与选区
     execRichText(command: string, value?: string) {
@@ -563,7 +563,7 @@ export default Vue.extend({
       this.state.updateElement(el.id, { [key]: value } as Partial<PptElementModel>);
     },
 
-    // ==================== 插入（参考 PPTist CanvasTool 的 add-element-handler） ====================
+    // ==================== 插入 ====================
     // 元素默认尺寸 / 样式 / 位置由 core 工厂统一维护，双端插入行为一致
 
     emitInsert(element: PptElementModel) {
@@ -922,7 +922,7 @@ export default Vue.extend({
   width: 62px;
 }
 
-/* 颜色按钮：图标 + 当前色块（参考 PPTist ColorButton） */
+/* 颜色按钮：图标 + 当前色块 */
 .vpk-color-btn {
   display: flex;
   align-items: center;

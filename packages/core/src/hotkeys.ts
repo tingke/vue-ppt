@@ -1,5 +1,5 @@
 /**
- * 元素编辑快捷键（参考 PPTist globalKeydownHandler，双端共享）：
+ * 元素编辑快捷键（双端共享）：
  * - Ctrl/Cmd + C 复制到剪贴板、Ctrl/Cmd + V 粘贴、Ctrl/Cmd + D 直接克隆
  * - Delete / Backspace 删除选中元素
  * - 方向键微移 1 单位（Shift ×10）
@@ -103,7 +103,7 @@ export function createHotkeyHandler(state: HotkeyState): (e: KeyboardEvent) => v
       return;
     }
 
-    // 方向键微移：Shift ×10（参考 PPTist KEYBOARD_USE_SHIFT）
+    // 方向键微移：Shift ×10
     const delta = ARROW_DELTAS[e.key];
     if (delta && selected) {
       e.preventDefault();

@@ -1,7 +1,7 @@
 <template>
   <!-- 静态渲染路径（缩略图等无交互场景）：不挂 ProseMirror，白名单过滤后 v-html -->
   <div v-if="static" class="vpk-text-view ProseMirror-static" :style="containerStyle" v-html="staticHtml"></div>
-  <!-- 常驻 ProseMirror 编辑器：editable 切换可编辑（无 v-if 销毁重建，参考 PPTist TextElement） -->
+  <!-- 常驻 ProseMirror 编辑器：editable 切换可编辑（无 v-if 销毁重建） -->
   <div v-else class="vpk-text-view vpk-biztext-view" :style="containerStyle" @mousedown="onMouseDown">
     <RichEditor
       ref="editorRef"
@@ -37,7 +37,7 @@ import {
   type RichTextCommand,
   type RichTextState,
   sanitizeRichText,
-} from '@vue-ppt-kit/core';
+} from '@vue-ppt/core';
 import { BIZ_VARIABLES_KEY, sharedEmitter } from '../emitter';
 import RichEditor from './RichEditor.vue';
 import BizVarPicker from './BizVarPicker.vue';
@@ -102,7 +102,7 @@ function onInput(payload: { text: string; height: number }) {
   emit('update', payload);
 }
 
-// 失焦仅回写、不退出编辑（PPTist 交互模型）：点击 fx 弹层等导致的 blur 不结束编辑
+// 失焦仅回写、不退出编辑：点击 fx 弹层等导致的 blur 不结束编辑
 function onBlur(payload: { text: string; height: number }) {
   if (!props.editing) return;
   emit('update', payload);
@@ -119,7 +119,7 @@ function onSelection(state: RichTextState) {
   emitter.emit(RICH_TEXT_STATE, state);
 }
 
-// 工具栏富文本命令（参考 PPTist RICH_TEXT_COMMAND 事件）→ 编辑器执行
+// 工具栏富文本命令 → 编辑器执行
 // 仅响应以自身元素为 target 的命令（多实例共存时防误投递）
 function onRichTextCommand(payload: RichTextCommand) {
   if (!props.editing) return;

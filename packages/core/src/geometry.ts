@@ -1,7 +1,6 @@
 /**
  * 画布几何算法（vue2 / vue3 双端共享）：拖拽对齐吸附 + 手柄缩放计算。
  * 纯函数、无副作用，供 SlideCanvas 的 mousemove 高频路径调用。
- * 参考 PPTist useDragElement / useScaleElement 的对齐吸附与缩放语义。
  */
 import type { PptElementModel } from './index';
 

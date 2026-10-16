@@ -1,7 +1,7 @@
 <template>
   <!-- 静态渲染路径（缩略图等无交互场景）：不挂 ProseMirror，白名单过滤后 v-html -->
   <div v-if="static" class="vpk-text-view ProseMirror-static" :style="containerStyle" v-html="staticHtml"></div>
-  <!-- 常驻 ProseMirror 编辑器：editable 切换可编辑（无 v-if 销毁重建，参考 PPTist TextElement） -->
+  <!-- 常驻 ProseMirror 编辑器：editable 切换可编辑（无 v-if 销毁重建） -->
   <div v-else class="vpk-text-view vpk-biztext-view" :style="containerStyle" @mousedown="onMouseDown">
     <RichEditor
       ref="editor"
@@ -37,7 +37,7 @@ import {
   sanitizeRichText,
   PptBizTextElement,
   PptBizVariableNode,
-} from '@vue-ppt-kit/core';
+} from '@vue-ppt/core';
 import { BIZ_VARIABLES_KEY, sharedEmitter } from '../emitter';
 import RichEditor from './RichEditor.vue';
 import BizVarPicker from './BizVarPicker.vue';
@@ -104,7 +104,7 @@ export default Vue.extend({
     onInput(payload: { text: string; height: number }) {
       this.$emit('update', payload);
     },
-    // 失焦仅回写、不退出编辑（PPTist 交互模型）：点击 fx 弹层等导致的 blur 不结束编辑
+    // 失焦仅回写、不退出编辑：点击 fx 弹层等导致的 blur 不结束编辑
     onBlur(payload: { text: string; height: number }) {
       if (!this.editing) return;
       this.$emit('update', payload);

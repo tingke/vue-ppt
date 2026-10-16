@@ -1,5 +1,5 @@
 /**
- * 编辑器事件转发器（参考 PPTist emitter）：
+ * 编辑器事件转发器：
  * 工具栏与画布元素组件解耦通信，如富文本命令 RICH_TEXT_COMMAND。
  *
  * 通过 createEmitter() 创建编辑器实例级 emitter，由 PptEditor / PptStage

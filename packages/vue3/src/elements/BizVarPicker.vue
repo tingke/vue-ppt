@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import type { PptBizVariableNode } from '@vue-ppt-kit/core';
+import type { PptBizVariableNode } from '@vue-ppt/core';
 
 interface FlatItem {
   node: PptBizVariableNode;

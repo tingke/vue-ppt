@@ -1,5 +1,5 @@
 <template>
-  <!-- 画布标尺（参考 PPTist Ruler.vue）：刻度按文档实际尺寸计算并绝对定位，读数与文档坐标一致 -->
+  <!-- 画布标尺：刻度按文档实际尺寸计算并绝对定位，读数与文档坐标一致 -->
   <div class="vpk-ruler">
     <div class="h" :style="{ width: viewportStyles.width * canvasScale + 'px', left: viewportStyles.left + 'px' }">
       <!-- 主刻度：竖线在 值 x 缩放比 处，数字右对齐止于刻度线前 -->
@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
-import { computeRulerTicks } from '@vue-ppt-kit/core';
+import { computeRulerTicks } from '@vue-ppt/core';
 
 // 刻度密度随缩放自适应：步长像素（step x canvasScale）< 36 时隐藏数字、< 72 时隐藏中点刻度
 const props = defineProps({

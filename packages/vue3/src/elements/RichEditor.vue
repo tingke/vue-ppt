@@ -1,11 +1,11 @@
 <template>
-  <!-- ProseMirror 常驻编辑器：无 v-if 切换，editable 控制可编辑（参考 PPTist ProsemirrorEditor） -->
+  <!-- ProseMirror 常驻编辑器：无 v-if 切换，editable 控制可编辑 -->
   <div ref="containerRef" class="vpk-rich-editor"></div>
 </template>
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { TextEditor, type RichTextAction, type RichTextState } from '@vue-ppt-kit/core';
+import { TextEditor, type RichTextAction, type RichTextState } from '@vue-ppt/core';
 
 const props = withDefaults(defineProps<{
   /** 受限白名单内联 HTML（PptTextElement.text），纯文本天然兼容 */
@@ -47,7 +47,6 @@ onMounted(() => {
   // 挂载即回写实测内容高度：新增文本的工厂默认高度（如 60）通常不等于
   // 编辑器内容实际高度，不同步会导致 vpk-text-view 与 vpk-rich-editor
   // 高度不一致、首次编辑（300ms 防抖回写）时盒子跳变
-  // （参考 PPTist TextElement 的 ResizeObserver 挂载即同步高度）
   emit('input', { text: props.value, height: editor.measureHeight() });
 });
 
@@ -56,7 +55,7 @@ onBeforeUnmount(() => {
   editor = null;
 });
 
-// 可编辑切换：不销毁重建，仅切换 editable（PPTist setProps 同款）
+// 可编辑切换：不销毁重建，仅切换 editable
 watch(() => props.editable, (v) => {
   if (!editor) return;
   editor.setEditable(v);
@@ -98,7 +97,7 @@ defineExpose({ execCommand, insertBizTag });
   line-height: 1.4;
   white-space: nowrap;
 }
-/* ProseMirror 富文本默认样式（参考 PPTist prosemirror.scss）：
+/* ProseMirror 富文本默认样式：
    同时覆盖编辑区（.ProseMirror）与静态渲染（.ProseMirror-static）。
    不在此设置 font-size：字号由元素级容器（.vpk-text-view 内联样式）逐级继承，
    固定值会以类选择器优先级压过用户设置的元素字号 */
@@ -122,7 +121,7 @@ defineExpose({ execCommand, insertBizTag });
 .ProseMirror p,
 .ProseMirror-static p {
   margin: 0;
-  /* 段间距：元素级 CSS 变量，缺省 5px（PPTist 默认值） */
+  /* 段间距：元素级 CSS 变量，缺省 5px */
   margin-top: var(--paragraphSpace, 5px);
 }
 .ProseMirror p:first-child,

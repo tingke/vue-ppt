@@ -1,7 +1,7 @@
 /**
  * TextEditor：ProseMirror EditorView 的框架无关封装（双端共享）。
  *
- * 参考 PPTist ProsemirrorEditor.vue 的关键行为：
+ * 关键行为：
  * - 输入防抖 300ms 回写（onInput）
  * - 失焦/销毁前 flush，保证最后一段输入不丢失
  * - 外部内容回写前检查 hasFocus，避免打字时光标跳动
@@ -133,7 +133,7 @@ export class TextEditor {
     });
   }
 
-  /** 外部内容回写：编辑器持有焦点时忽略，避免打字跳光标（PPTist 同款保护） */
+  /** 外部内容回写：编辑器持有焦点时忽略，避免打字跳光标 */
   setContent(html: string): void {
     if (this.view.hasFocus()) return;
     const { state } = this.view;
@@ -152,7 +152,7 @@ export class TextEditor {
     this.view.focus();
   }
 
-  /** 选区为空时自动全选后执行命令（PPTist autoSelectAll 语义） */
+  /** 选区为空时自动全选后执行命令 */
   execCommand(action: RichTextAction): void {
     let { state } = this.view;
     if (state.selection.empty) {

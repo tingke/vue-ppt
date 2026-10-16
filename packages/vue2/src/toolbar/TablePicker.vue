@@ -1,5 +1,5 @@
 <template>
-  <!-- 参考 PPTist TableGenerator：10x10 网格悬停选择行列，支持自定义输入；fixed 定位避免被滚动容器裁剪 -->
+  <!-- 10x10 网格悬停选择行列，支持自定义输入；fixed 定位避免被滚动容器裁剪 -->
   <div class="vpk-table-picker" :style="popupStyle" @mouseleave="endCell = []">
     <div class="vpk-table-picker-title">
       <span>{{ isCustom ? '自定义' + typeName : typeName + ' ' + (endCell.length ? endCell[0] + ' x ' + endCell[1] : '') }}</span>
@@ -41,7 +41,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { createBizTableElement, createTableElement, PptBizTableElement, PptDocumentModel, PptTableElement } from '@vue-ppt-kit/core';
+import { createBizTableElement, createTableElement, PptBizTableElement, PptDocumentModel, PptTableElement } from '@vue-ppt/core';
 
 // 表格行列选择器：网格 / 自定义行列，元素构造走 core 工厂（双端一致）
 export default Vue.extend({
@@ -56,7 +56,7 @@ export default Vue.extend({
   data() {
     return {
       endCell: [] as number[],
-      // 自定义行列（参考 PPTist TableGenerator 的自定义模式）
+      // 自定义行列
       isCustom: false,
       customRow: 3,
       customCol: 3,
@@ -120,7 +120,7 @@ export default Vue.extend({
 .vpk-table-picker-toggle:hover {
   text-decoration: underline;
 }
-/* 自定义行列面板（参考 PPTist TableGenerator 自定义模式） */
+/* 自定义行列面板 */
 .vpk-table-custom {
   width: 170px;
 }

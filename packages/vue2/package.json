@@ -1,15 +1,15 @@
 {
-  "name": "@vue-ppt-kit/vue2",
+  "name": "@vue-ppt/vue2",
   "version": "0.1.0",
-  "main": "./dist/vue-ppt-kit-vue2.common.js",
-  "module": "./dist/vue-ppt-kit-vue2.common.js",
+  "main": "./dist/vue-ppt-vue2.common.js",
+  "module": "./dist/vue-ppt-vue2.common.js",
   "types": "./types/index.d.ts",
   "files": [
     "dist",
     "types"
   ],
   "scripts": {
-    "build": "vue-cli-service build --target lib --name vue-ppt-kit-vue2 src/index.ts"
+    "build": "vue-cli-service build --target lib --name vue-ppt-vue2 src/index.ts"
   },
   "peerDependencies": {
     "@vue/composition-api": "^1.7.2",
@@ -26,7 +26,7 @@
     "vue-template-compiler": "2.6.14"
   },
   "dependencies": {
-    "@vue-ppt-kit/core": "workspace:*",
+    "@vue-ppt/core": "workspace:*",
     "vuedraggable": "2.24.3"
   }
 }

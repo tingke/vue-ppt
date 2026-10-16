@@ -2,6 +2,6 @@
   "name": "playground-vue3-app",
   "private": true,
   "scripts": { "dev": "vite", "build": "vite build" },
-  "dependencies": { "@vue-ppt-kit/vue3": "workspace:*", "@vue-ppt-kit/theme": "workspace:*", "element-plus": "^2.7.8", "vue": "^3.4.0" },
+  "dependencies": { "@vue-ppt/vue3": "workspace:*", "@vue-ppt/theme": "workspace:*", "element-plus": "^2.7.8", "vue": "^3.4.0" },
   "devDependencies": { "@vitejs/plugin-vue": "^5.1.2", "vite": "^5.4.0", "typescript": "~5.5.4" }
 }

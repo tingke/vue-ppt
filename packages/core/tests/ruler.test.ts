@@ -14,7 +14,7 @@ describe('computeRulerTicks', () => {
     expect(values).toEqual([50, 100, 150, 200, 250, 300, 350, 400, 450, 500]);
   });
 
-  it('PPTist 尺寸 1000：步长 100，含右缘 1000', () => {
+  it('文档尺寸 1000：步长 100，含右缘 1000', () => {
     const { step, values } = computeRulerTicks(1000);
     expect(step).toBe(100);
     expect(values[values.length - 1]).toBe(1000);

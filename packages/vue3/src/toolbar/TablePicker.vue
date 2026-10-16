@@ -1,5 +1,5 @@
 <template>
-  <!-- 参考 PPTist TableGenerator：10x10 网格悬停选择行列，支持自定义输入；fixed 定位避免被滚动容器裁剪 -->
+  <!-- 10x10 网格悬停选择行列，支持自定义输入；fixed 定位避免被滚动容器裁剪 -->
   <div class="vpk-table-picker" :style="popupStyle" @mouseleave="endCell = []">
     <div class="vpk-table-picker-title">
       <span>{{ isCustom ? `自定义${typeName}` : `${typeName} ${endCell.length ? `${endCell[0]} x ${endCell[1]}` : ''}` }}</span>
@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { CSSProperties } from 'vue';
-import { createBizTableElement, createTableElement, type PptBizTableElement, type PptDocumentModel, type PptTableElement } from '@vue-ppt-kit/core';
+import { createBizTableElement, createTableElement, type PptBizTableElement, type PptDocumentModel, type PptTableElement } from '@vue-ppt/core';
 
 const props = defineProps<{
   /** 弹层 fixed 定位坐标（父组件依据触发按钮计算） */
@@ -58,7 +58,7 @@ const emit = defineEmits<{
 }>();
 
 const endCell = ref<number[]>([]);
-// 自定义行列（参考 PPTist TableGenerator 的自定义模式）
+// 自定义行列
 const isCustom = ref(false);
 const customRow = ref(3);
 const customCol = ref(3);
@@ -113,7 +113,7 @@ function insertTableElement(row: number, col: number) {
 .vpk-table-picker-toggle:hover {
   text-decoration: underline;
 }
-/* 自定义行列面板（参考 PPTist TableGenerator 自定义模式） */
+/* 自定义行列面板 */
 .vpk-table-custom {
   width: 170px;
 }

@@ -37,7 +37,7 @@ import {
   readFileAsDataURL,
   type PptDocumentModel,
   type PptImageElement,
-} from '@vue-ppt-kit/core';
+} from '@vue-ppt/core';
 
 // 组件常驻（仅 overlay 随 visible 显隐），上传的图库列表在多次开关间保留；
 // 每次打开时清空已选
@@ -89,7 +89,7 @@ function triggerUpload() {
 }
 
 // 确定：按选择顺序生成图片元素（等比缩放至整画布内并居中），
-// 交由父组件逐张插入并置于底层（参考 PPTist createImageElement）
+// 交由父组件逐张插入并置于底层
 async function confirm() {
   const srcs = selectedBgs.value.slice().reverse();
   const elements: PptImageElement[] = [];

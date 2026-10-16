@@ -32,7 +32,7 @@
           @cell-update="onTableCellUpdate(el, $event)"
         />
 
-        <!-- 选中缩放手柄（参考 PPTist Operate 层；文本元素仅左右两点） -->
+        <!-- 选中缩放手柄（文本元素仅左右两点） -->
         <template v-if="!static && el.id === selectedId">
           <span
             v-for="h in resizeHandlers(el)"
@@ -44,7 +44,7 @@
         </template>
       </div>
 
-      <!-- 对齐吸附线（参考 PPTist AlignmentLine） -->
+      <!-- 对齐吸附线 -->
       <div
         v-for="(l, i) in alignLineViews"
         :key="'al' + i"
@@ -70,7 +70,7 @@ import {
   type PptSlideModel,
   type PptTableCell,
   type ResizeDirection,
-} from '@vue-ppt-kit/core';
+} from '@vue-ppt/core';
 import { elementComponentMap } from './elements';
 
 const props = withDefaults(defineProps<{
@@ -129,7 +129,7 @@ const selectedLinkedId = computed<string | undefined>(() => {
   return selected && selected.type === 'media' ? (selected as PptMediaElement).textId : undefined;
 });
 
-// 仅选中元素显示虚线框（参考 PPTist Operate 选中层），线宽按画布缩放反向补偿，视觉恒定 1px
+// 仅选中元素显示虚线框，线宽按画布缩放反向补偿，视觉恒定 1px
 const selectedOutline = computed(() => ({
   outline: `${1 / props.canvasScale}px dashed var(--vpk-primary, #409eff)`,
 }));
@@ -147,7 +147,7 @@ function alignLineStyle(l: AlignLineView): CSSProperties {
 
 // ==================== 元素拖动 ====================
 
-// 参考 PPTist useDragElement：mousedown 起始、document 级跟踪、误操作判定、吸附校正
+// mousedown 起始、document 级跟踪、误操作判定、吸附校正
 interface DragContext {
   element: PptElementModel;
   startX: number;
@@ -240,7 +240,7 @@ function onDocumentMouseUp() {
   alignLineViews.value = [];
 }
 
-// ==================== 缩放手柄（参考 PPTist Operate/ResizeHandler + useScaleElement） ====================
+// ==================== 缩放手柄 ====================
 
 interface ResizeContext {
   element: PptElementModel;
@@ -274,7 +274,7 @@ function resizeHandlers(el: PptElementModel) {
     { direction: 'RIGHT_BOTTOM', style: { ...base, left: `${fullW}px`, top: `${fullH}px`, cursor: 'nwse-resize' } },
   ];
 
-  // 文本类元素（文本/业务文本）仅支持左右调整宽度（参考 PPTist textElementResizeHandlers）
+  // 文本类元素（文本/业务文本）仅支持左右调整宽度
   if (el.type === 'text' || el.type === 'bizText') {
     return all.filter((h) => h.direction === 'LEFT' || h.direction === 'RIGHT');
   }
@@ -313,7 +313,7 @@ function onResizeMouseMove(e: MouseEvent) {
     else my = -mx / ratio;
   }
 
-  // 被拖动边吸附（参考 PPTist useScaleElement 的 alignedAdsorption；吸附线已缓存）
+  // 被拖动边吸附（吸附线已缓存）
   const { h, v } = ctx.alignLines;
   const lines: AlignLineView[] = [];
   if (d.includes('LEFT') || d.includes('RIGHT')) {
@@ -354,7 +354,7 @@ function onElementDblClick(el: PptElementModel) {
   emit('edit-text', el);
 }
 
-// 元素右键：先选中再抛给编辑器打开上下文菜单（参考 PPTist EditableElement contextmenus）
+// 元素右键：先选中再抛给编辑器打开上下文菜单
 function onElementContextMenu(el: PptElementModel, e: MouseEvent) {
   if (props.static) return;
   emit('select', el);

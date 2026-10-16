@@ -1,6 +1,11 @@
+/**
+ * 编辑器文档状态（vue2，@vue/composition-api）：文档 / 页面 / 选中编辑态的读写
+ * 与元素增删改、页面增删复制排序、剪贴板与对齐工具。外部文档深拷贝接管，
+ * 避免双向渗透。与 packages/vue3/src/useSlides.ts 为同构实现，修改时请双端同步。
+ */
 import Vue from 'vue';
 import { computed, reactive } from '@vue/composition-api';
-import { createEmptyDocument, genId, PptDocumentModel, PptElementModel, PptSlideType } from '@vue-ppt-kit/core';
+import { createEmptyDocument, genId, PptDocumentModel, PptElementModel, PptSlideType } from '@vue-ppt/core';
 
 interface SlidesState {
   doc: PptDocumentModel;
@@ -28,7 +33,7 @@ interface SlidesState {
   pasteElement: () => void;
 }
 
-// genId / 元素工厂 / 预设等共享逻辑由 @vue-ppt-kit/core 提供（双端一致）
+// genId / 元素工厂 / 预设等共享逻辑由 @vue-ppt/core 提供（双端一致）
 // 注：克隆沿用 JSON 深拷贝（vue2 需兼容不支持 structuredClone 的旧浏览器）
 
 export function useSlides(options?: { document?: PptDocumentModel }): SlidesState {
@@ -43,7 +48,7 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
   const slideIndex = reactive({ value: 0 });
   const currentSlide = computed(() => doc.slides[slideIndex.value]);
 
-  // 选中 / 编辑态（参考 PPTist store 的 activeElementIdList 简化为单选）
+  // 选中 / 编辑态（单选）
   const selectedElementId = reactive({ value: '' });
   const editingElementId = reactive({ value: '' });
 
@@ -118,7 +123,7 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     });
   }
 
-  // 向当前页插入元素（参考 PPTist slidesStore.addElement），并默认选中
+  // 向当前页插入元素，并默认选中
   function addElement(element: PptElementModel) {
     const slide = doc.slides[slideIndex.value];
     if (!slide) return;
@@ -137,7 +142,7 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     if (editingElementId.value === id) editingElementId.value = '';
   }
 
-  // 复制元素：克隆并偏移一段距离，插到原元素之后（参考 PPTist copyElement）
+  // 复制元素：克隆并偏移一段距离，插到原元素之后
   function copyElement(id: string) {
     const slide = doc.slides[slideIndex.value];
     if (!slide) return;
@@ -173,7 +178,7 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     editingElementId.value = '';
   }
 
-  // 调整元素层级：数组末尾为顶层（参考 PPTist useOrderElement）
+  // 调整元素层级：数组末尾为顶层
   function orderElement(id: string, command: 'up' | 'down' | 'top' | 'bottom') {
     const slide = doc.slides[slideIndex.value];
     if (!slide) return;
@@ -186,7 +191,7 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     else slide.elements.unshift(removed);
   }
 
-  // 元素相对画布对齐（参考 PPTist useAlignElementToCanvas）
+  // 元素相对画布对齐
   function alignElementToCanvas(id: string, command: 'horizontal' | 'vertical') {
     const el = (doc.slides[slideIndex.value]?.elements || []).find((e) => e.id === id);
     if (!el) return;
@@ -194,7 +199,7 @@ export function useSlides(options?: { document?: PptDocumentModel }): SlidesStat
     else el.y = Math.round((doc.height - el.height) / 2);
   }
 
-  // 内部剪贴板（参考 PPTist mainStore 的 clipboard）：复制暂存、粘贴时克隆插入
+  // 内部剪贴板：复制暂存、粘贴时克隆插入
   const clipboard = reactive<{ value: PptElementModel | null }>({ value: null });
 
   // 复制指定元素到剪贴板（不动画布，配合粘贴按钮使用）

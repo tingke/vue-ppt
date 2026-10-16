@@ -44,11 +44,11 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { sanitizeRichText, PptBizTableElement, PptBizTextElement, PptTableCell, PptTableElement, PptTextElement } from '@vue-ppt-kit/core';
+import { sanitizeRichText, PptBizTableElement, PptBizTextElement, PptTableCell, PptTableElement, PptTextElement } from '@vue-ppt/core';
 import TextElement from './TextElement.vue';
 import BizTextElement from './BizTextElement.vue';
 
-// 参考 PPTist BaseTableElement：双击单元格进入编辑（单元格内挂富文本编辑器，
+// 双击单元格进入编辑（单元格内挂富文本编辑器，
 // 失焦 / 卸载 flush / Escape 提交）。biz 为 true 时即富表格：单元格为业务文本（fx 业务字段混排）
 export default Vue.extend({
   name: 'PptTableElement',

@@ -1,5 +1,5 @@
 /**
- * ProseMirror 富文本 Schema（参考 PPTist src/utils/prosemirror）。
+ * ProseMirror 富文本 Schema。
  *
  * 设计要点：
  * - nodes 仅 doc / paragraph / text / hard_break：对齐、行距等段落级样式

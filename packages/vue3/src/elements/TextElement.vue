@@ -1,7 +1,7 @@
 <template>
   <!-- 静态渲染路径（缩略图等无交互场景）：不挂 ProseMirror，白名单过滤后 v-html -->
   <div v-if="static" class="vpk-text-view ProseMirror-static" :style="containerStyle" v-html="staticHtml"></div>
-  <!-- 常驻 ProseMirror 编辑器：editable 切换可编辑（无 v-if 销毁重建，参考 PPTist TextElement） -->
+  <!-- 常驻 ProseMirror 编辑器：editable 切换可编辑（无 v-if 销毁重建） -->
   <div v-else ref="containerRef" class="vpk-text-view" :style="containerStyle" @mousedown="onMouseDown">
     <RichEditor
       ref="editorRef"
@@ -27,11 +27,11 @@ import {
   type RichTextState,
   sanitizeRichText,
   type PptTextElement,
-} from '@vue-ppt-kit/core';
+} from '@vue-ppt/core';
 import { sharedEmitter } from '../emitter';
 import RichEditor from './RichEditor.vue';
 
-// 参考 PPTist TextElement：编辑器常驻，样式分层——
+// 编辑器常驻，样式分层——
 // 元素级属性（字号/颜色/字体/行距/对齐/填充）作为容器默认样式，
 // 富文本 mark 只记录差异部分，二者天然不冲突
 const props = withDefaults(defineProps<{
@@ -86,7 +86,7 @@ function onInput(payload: { text: string; height: number }) {
   emit('update', payload);
 }
 
-// 失焦仅回写、不退出编辑（PPTist 交互模型）：点击工具栏下拉等导致的 blur
+// 失焦仅回写、不退出编辑：点击工具栏下拉等导致的 blur
 // 不应结束编辑，退出仅由选中切换 / 点击空白 / Escape 触发
 function onBlur(payload: { text: string; height: number }) {
   if (!props.editing) return;
@@ -104,7 +104,7 @@ function onSelection(state: RichTextState) {
   emitter.emit(RICH_TEXT_STATE, state);
 }
 
-// 工具栏富文本命令（参考 PPTist RICH_TEXT_COMMAND 事件）→ 编辑器执行
+// 工具栏富文本命令 → 编辑器执行
 // 仅响应以自身元素为 target 的命令（多实例共存时防误投递）
 function onRichTextCommand(payload: RichTextCommand) {
   if (!props.editing) return;

@@ -366,7 +366,7 @@
                 <span>表格</span>
               </button>
 
-              <!-- 参考 PPTist TableGenerator：10x10 网格悬停选择行列，支持自定义输入 -->
+              <!-- 10x10 网格悬停选择行列，支持自定义输入 -->
               <TablePicker
                 v-if="tablePickerVisible"
                 :popup-style="tablePopupStyle"
@@ -416,7 +416,7 @@ import {
   type PptTextAlign,
   type PptTextElement,
   type RichTextState,
-} from '@vue-ppt-kit/core';
+} from '@vue-ppt/core';
 import type { useSlides } from '../useSlides';
 import { sharedEmitter } from '../emitter';
 import ColorPopup from './ColorPopup.vue';
@@ -501,7 +501,7 @@ const activeTab = ref<'home' | 'insert'>('home');
 const ICONS = TOOLBAR_ICONS;
 
 // ==================== 编辑（复制 / 粘贴） ====================
-// 复制：暂存到内部剪贴板（参考 PPTist mainStore clipboard）；粘贴：克隆插入当前页
+// 复制：暂存到内部剪贴板；粘贴：克隆插入当前页
 
 // 标尺 / 参考线显隐切换（编辑辅助 UI，状态在 useSlides）
 function toggleRuler() {
@@ -523,7 +523,7 @@ function updateText(patch: Partial<PptTextElement>) {
   state.value?.updateElement(el.id, patch);
 }
 
-// 富文本命令：编辑态下作用于选中文字（参考 PPTist RICH_TEXT_COMMAND 事件）
+// 富文本命令：编辑态下作用于选中文字
 // 携带 target（元素 id），编辑器侧仅响应自身元素，防止命令误投递
 // @mousedown.prevent 于模板上保持编辑区焦点与选区
 function execRichText(command: string, value?: string) {
@@ -600,7 +600,7 @@ function updatePosition(key: 'x' | 'y' | 'width' | 'height', e: Event) {
 // ==================== 排列 ====================
 // 命令候选项由 core 预设共享（ORDER_OPTIONS），层级操作直接调用 useSlides
 
-// ==================== 插入（参考 PPTist CanvasTool 的 add-element-handler） ====================
+// ==================== 插入 ====================
 
 // 插入元素统一入口，由编辑器层（PptEditor）写入当前页
 function emitInsert(element: PptElementModel) {
@@ -968,7 +968,7 @@ onBeforeUnmount(() => {
   width: 62px;
 }
 
-/* 颜色按钮：图标 + 当前色块（参考 PPTist ColorButton） */
+/* 颜色按钮：图标 + 当前色块 */
 .vpk-color-btn {
   display: flex;
   align-items: center;

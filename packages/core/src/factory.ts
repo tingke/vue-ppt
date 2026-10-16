@@ -21,7 +21,7 @@ interface DocSize {
   height: number;
 }
 
-/** 插入文本元素：占画布一半宽、高 60，居中（参考 PPTist createTextElement） */
+/** 插入文本元素：占画布一半宽、高 60，居中 */
 export function createTextElement(doc: DocSize): PptTextElement {
   const width = Math.round(doc.width * 0.5);
   const height = 60;
@@ -80,7 +80,7 @@ export function createMediaTextElement(media: { x: number; y: number; width: num
   };
 }
 
-/** 插入图片元素：按原图比例缩放至画布 fitRatio 比例范围内并居中（参考 PPTist createImageElement） */
+/** 插入图片元素：按原图比例缩放至画布 fitRatio 比例范围内并居中 */
 export function createImageElement(
   src: string,
   img: { width: number; height: number },

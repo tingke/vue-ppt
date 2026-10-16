@@ -17,7 +17,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { clampGuideValue } from '@vue-ppt-kit/core';
+import { clampGuideValue } from '@vue-ppt/core';
 
 // 参考线拖动层：props 单向（位置由编辑器 state 提供），拖动经 update 事件回写
 export default Vue.extend({

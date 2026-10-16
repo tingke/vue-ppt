@@ -20,7 +20,7 @@
       >
         <!-- 画布标尺：100 文档单位主刻度，随缩放自适应密度 -->
         <Ruler v-if="state.showRuler.value" :viewport-styles="rulerViewport" :canvas-scale="canvasScale" />
-        <!-- 参考 PPTist：viewport 固定为文档实际尺寸，通过 transform scale 缩放 -->
+        <!-- viewport 固定为文档实际尺寸，通过 transform scale 缩放 -->
         <div
           class="vpk-viewport"
           :style="{
@@ -61,7 +61,14 @@
           />
         </div>
 
-        <!-- 缩放控件：参考 PPTist CanvasTool 的缩放模块 -->
+        <!-- 按住空格时的拖拽遮罩：抓手光标、阻断元素交互，mousedown 触发画布拖动 -->
+        <div
+          v-if="spaceKeyState"
+          class="vpk-drag-mask"
+          @mousedown.prevent="onDragViewportMousedown"
+        ></div>
+
+        <!-- 缩放控件 -->
         <div class="vpk-zoom-tool">
           <span class="vpk-zoom-btn" title="缩小 (Ctrl + -)" @click="scaleCanvas('-')">−</span>
           <span class="vpk-zoom-text" title="点击重置 (Ctrl + 0)" @click="resetCanvas">{{ canvasScalePercentage }}</span>
@@ -70,7 +77,7 @@
       </div>
     </div>
 
-    <!-- 元素右键菜单（参考 PPTist EditableElement contextmenus） -->
+    <!-- 元素右键菜单 -->
     <div
       v-if="elMenu.visible"
       class="vpk-contextmenu"
@@ -90,7 +97,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { computed, provide, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api';
-import { createEmitter, EDITOR_EMITTER, createHotkeyHandler, markHotkeyScope as markScope, createMediaTextElement, PptBizVariableNode, PptDocumentModel, PptElementModel, PptMediaElement } from '@vue-ppt-kit/core';
+import { createEmitter, EDITOR_EMITTER, createHotkeyHandler, markHotkeyScope as markScope, createMediaTextElement, PptBizVariableNode, PptDocumentModel, PptElementModel, PptMediaElement } from '@vue-ppt/core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
 import { BIZ_VARIABLES_KEY, MEDIA_OPTIONS_KEY } from './emitter';
@@ -145,6 +152,13 @@ export default Vue.extend({
       state.guides.value[payload.axis] = payload.value;
     };
 
+    // 按住空格拖动遮罩：视为点击空白清除选中/编辑态，随后平移画布视口
+    const onDragViewportMousedown = (e: MouseEvent) => {
+      state.selectedElementId.value = '';
+      state.editingElementId.value = '';
+      scaleState.dragViewport(e);
+    };
+
     // 切换页面时清除选中 / 编辑态
     watch(
       () => state.slideIndex.value,
@@ -160,7 +174,7 @@ export default Vue.extend({
       const prevId = state.selectedElementId.value;
       state.selectedElementId.value = el ? el.id : '';
       // 选中切换（含点击空白）时退出文本编辑：编辑态 blur 只回写不退出，
-      // 退出编辑仅由选中切换 / 点击空白 / Escape 触发（PPTist 同款交互模型）
+      // 退出编辑仅由选中切换 / 点击空白 / Escape 触发
       if (!el || el.id !== prevId) state.editingElementId.value = '';
     };
 
@@ -179,7 +193,7 @@ export default Vue.extend({
 
     const onUpdateText = (payload: { id: string; text: string; height: number }) => {
       if (!payload.text.trim()) {
-        // 空文本：删除元素（参考 PPTist checkEmptyText）
+        // 空文本：删除元素
         state.removeElement(payload.id);
       } else {
         state.updateElement(payload.id, { text: payload.text, height: payload.height });
@@ -214,7 +228,7 @@ export default Vue.extend({
       state.addElement(element);
     };
 
-    // ==================== 元素右键菜单（参考 PPTist EditableElement contextmenus） ====================
+    // ==================== 元素右键菜单 ====================
 
     interface ElMenuItem {
       text?: string;
@@ -282,7 +296,7 @@ export default Vue.extend({
       if (!target.closest('.vpk-contextmenu')) elMenu.visible = false;
     };
 
-    // 全局快捷键（元素级编辑：复制/粘贴/克隆/删除/微移/Escape，参考 PPTist globalKeydownHandler）
+    // 全局快捷键（元素级编辑：复制/粘贴/克隆/删除/微移/Escape）
     const hotkeyHandler = createHotkeyHandler(state);
 
     // 编辑器根节点 mousedown：标记本实例为快捷键作用域（同页多实例互不干扰）
@@ -304,6 +318,7 @@ export default Vue.extend({
       rulerViewport,
       onGuideUpdate,
       onEditorMouseDown,
+      onDragViewportMousedown,
       onSelect: (i: number) => { state.slideIndex.value = i; },
       onSelectElement,
       onElementDragMove,
@@ -348,6 +363,16 @@ export default Vue.extend({
   position: absolute;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transform-origin: 0 0;
+}
+/* 画布拖拽遮罩：覆盖整个画布区域，DOM 顺序在 viewport 之后、缩放控件之前 */
+.vpk-drag-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  cursor: grab;
+  user-select: none;
 }
 .vpk-zoom-tool {
   position: absolute;

@@ -1,3 +1,16 @@
+/**
+ * @vue-ppt/core：框架无关的核心包（vue2 / vue3 双端共享）。
+ *
+ * 内容：
+ * - 文档模型：PptDocumentModel / PptSlideModel / PptElementModel 及各元素类型定义
+ * - 富文本：ProseMirror 编辑内核（richeditor/）、白名单过滤与业务字段 tag 工具
+ * - 画布算法：拖拽吸附 / 手柄缩放几何计算（geometry）、标尺刻度换算（ruler）
+ * - 编辑器基建：元素工厂（factory）、事件转发器（emitter）、快捷键（hotkeys）、
+ *   工具栏预设（presets）、图标（icons）
+ *
+ * 本包不依赖 Vue 或任何 UI 框架，可在任意环境（含 Node 测试环境）使用。
+ */
+
 export interface PptDocumentModel {
   width: number;
   height: number;

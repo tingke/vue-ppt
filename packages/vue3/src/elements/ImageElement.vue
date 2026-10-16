@@ -3,9 +3,9 @@
 </template>
 
 <script setup lang="ts">
-import type { PptImageElement } from '@vue-ppt-kit/core';
+import type { PptImageElement } from '@vue-ppt/core';
 
-// 参考 PPTist BaseImageElement：纯静态渲染图片元素
+// 纯静态渲染图片元素
 defineProps<{
   element: PptImageElement;
 }>();
