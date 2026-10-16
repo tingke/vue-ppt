@@ -1,5 +1,6 @@
 <template>
-  <div class="vpk-editor">
+  <!-- mousedown 标记快捷键作用域：同页多实例时仅最近交互实例接管按键 -->
+  <div class="vpk-editor" @mousedown="markHotkeyScope(state)">
     <Toolbar :doc="state.doc" :state="state" @insert="onInsert" @save="emit('save')" />
     <div class="vpk-main">
       <SlideThumbnails
@@ -17,6 +18,8 @@
       class="vpk-editor-canvas"
       @wheel="handleMousewheelCanvas"
     >
+      <!-- 画布标尺：100 文档单位主刻度，随缩放自适应密度 -->
+      <Ruler v-if="state.showRuler.value" :viewport-styles="rulerViewport" :canvas-scale="canvasScale" />
       <!-- 参考 PPTist：viewport 固定为文档实际尺寸，通过 transform scale 缩放 -->
       <div
         class="vpk-viewport"
@@ -44,6 +47,17 @@
           @update-text="onUpdateText"
           @input-text="onInputText"
           @element-update="onElementUpdate"
+        />
+
+        <!-- 参考线：横竖各一条虚线，可拖动（位置存编辑器级 state，不进文档） -->
+        <GuidesLayer
+          v-if="state.showGuides.value"
+          :width="state.doc.width"
+          :height="state.doc.height"
+          :canvas-scale="canvasScale"
+          :x="state.guides.value.x"
+          :y="state.guides.value.y"
+          @update="onGuideUpdate"
         />
       </div>
 
@@ -80,6 +94,8 @@ import { ref, computed, reactive, onMounted, onUnmounted, provide, watch, type P
 import {
   createEmitter,
   EDITOR_EMITTER,
+  createHotkeyHandler,
+  markHotkeyScope,
   createMediaTextElement,
   type PptBizVariableNode,
   type PptDocumentModel,
@@ -91,7 +107,9 @@ import { useCanvasScale } from './useCanvasScale';
 import { BIZ_VARIABLES_KEY, MEDIA_OPTIONS_KEY } from './emitter';
 import SlideThumbnails from './SlideThumbnails.vue';
 import SlideCanvas from './SlideCanvas.vue';
-import Toolbar from './Toolbar.vue';
+import Toolbar from './toolbar/index.vue';
+import Ruler from './Ruler.vue';
+import GuidesLayer from './GuidesLayer.vue';
 
 const props = defineProps({
   document: { type: Object as PropType<PptDocumentModel>, default: undefined },
@@ -130,6 +148,19 @@ const {
 
 // 文档尺寸变化时重新计算视口
 watch([docWidth, docHeight], () => setViewportPosition());
+
+// 标尺定位参数：viewport 在画布容器内的位置 + 文档尺寸
+const rulerViewport = computed(() => ({
+  left: viewportLeft.value,
+  top: viewportTop.value,
+  width: docWidth.value,
+  height: docHeight.value,
+}));
+
+// 参考线拖动回写（编辑器级 state，不进文档数据）
+function onGuideUpdate(payload: { axis: 'x' | 'y'; value: number }) {
+  state.guides.value[payload.axis] = payload.value;
+}
 
 // 切换页面时清除选中 / 编辑态
 watch(
@@ -267,6 +298,9 @@ function closeElMenu() {
   elMenu.visible = false;
 }
 
+// 全局快捷键（元素级编辑：复制/粘贴/克隆/删除/微移/Escape，参考 PPTist globalKeydownHandler）
+const hotkeyHandler = createHotkeyHandler(state);
+
 function onGlobalMouseDown(e: MouseEvent) {
   const target = e.target as HTMLElement;
   if (!target.closest('.vpk-contextmenu')) closeElMenu();
@@ -274,10 +308,12 @@ function onGlobalMouseDown(e: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('mousedown', onGlobalMouseDown);
+  document.addEventListener('keydown', hotkeyHandler);
 });
 
 onUnmounted(() => {
   document.removeEventListener('mousedown', onGlobalMouseDown);
+  document.removeEventListener('keydown', hotkeyHandler);
 });
 </script>
 

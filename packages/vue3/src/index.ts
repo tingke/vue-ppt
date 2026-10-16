@@ -2,7 +2,7 @@ import type { App } from 'vue';
 import PptEditor from './PptEditor.vue';
 import SlideThumbnails from './SlideThumbnails.vue';
 import SlideCanvas from './SlideCanvas.vue';
-import Toolbar from './Toolbar.vue';
+import Toolbar from './toolbar/index.vue';
 export { PptEditor, SlideThumbnails, SlideCanvas, Toolbar };
 export { useSlides } from './useSlides';
 export default {
