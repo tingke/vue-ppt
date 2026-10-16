@@ -1,7 +1,15 @@
 {
   "name": "@tthappy/ppt-vue2",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publishConfig": { "access": "public" },
+  "browserslist": [
+    "chrome >= 61",
+    "firefox >= 60",
+    "safari >= 11",
+    "edge >= 79",
+    "ios_saf >= 11",
+    "not dead"
+  ],
   "main": "./dist/vue-ppt-vue2.common.js",
   "module": "./dist/vue-ppt-vue2.common.js",
   "types": "./types/index.d.ts",
