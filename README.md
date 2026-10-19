@@ -1,6 +1,6 @@
 # vue-ppt
 
-面向业务场景的 Vue 2.6 / Vue 3 双版本 PPT 编辑器组件库。核心逻辑沉淀在框架无关的 `core` 包中，Vue 2 与 Vue 3 两侧提供同构的编辑器组件，交互与数据模型完全一致。
+面向业务场景的 Vue 2.6 / 2.7 / Vue 3 PPT 编辑器组件库。核心逻辑沉淀在框架无关的 `core` 包中，Vue 2 与 Vue 3 两侧提供同构的编辑器组件，交互与数据模型完全一致。
 
 ![编辑器预览](docs/preview.png)
 
@@ -22,7 +22,7 @@
 | 包 | 说明 |
 | --- | --- |
 | `@tthappy/ppt-core` | 框架无关核心：文档模型、几何吸附算法、ProseMirror 富文本内核、快捷键、元素工厂、工具栏预设 |
-| `@tthappy/ppt-vue2` | Vue 2.6 编辑器组件（`PptStage`），基于 `@vue/composition-api` |
+| `@tthappy/ppt-vue2` | Vue 2.6 / 2.7 编辑器组件（`PptStage`），组合式 API 运行时自适应（2.7 内置 / 2.6 内置插件） |
 | `@tthappy/ppt-vue3` | Vue 3 编辑器组件（`PptEditor`） |
 | `@tthappy/ppt-theme` | 共享 CSS 变量与基础样式 |
 
@@ -60,7 +60,7 @@ createApp(App).use(PptKit).mount('#app');
 </template>
 ```
 
-### Vue 2.6
+### Vue 2.6 / 2.7
 
 ```js
 import Vue from 'vue';
@@ -130,8 +130,8 @@ pnpm typecheck                            # core + vue3 类型检查
 pnpm --filter @tthappy/ppt-core test      # core 单元测试（vitest）
 ```
 
-## Vue 2.6 注意事项
+## Vue 2 注意事项
 
-- 通过 `@vue/composition-api` 提供 Composition API。
-- Vue SFC 使用 `vue-template-compiler@2.6.14`，必须与 `vue` 版本严格一致。
-- Vue 2 包使用独立构建链（Vue CLI/Webpack），避免 Vue 3 编译器产物混入；两个 Playground 依赖树完全独立。
+- 组合式 API 经 `packages/vue2/src/compat.ts` 运行时自适应：Vue 2.7 用内置实现，Vue 2.6 用随包内置的 `@vue/composition-api`（自动注册，宿主零配置）。**Vue 2.7 下不可注册该插件**（其 setup 挂载机制与原生 setup 双重冲突，详见 `packages/vue2/README.md`）。
+- Vue SFC 使用 `vue-template-compiler@2.7.16`（编译器与 2.6 运行时兼容，已验证）；宿主项目的 `vue` 与 `vue-template-compiler` 需严格同版本。
+- Vue 2 包使用独立构建链（Vite lib），产物为扁平 ESM/CJS，避免 webpack 宿主二次打包冲突；两个 Playground 依赖树完全独立。

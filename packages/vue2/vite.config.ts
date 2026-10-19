@@ -18,7 +18,8 @@ export default defineConfig({
             cssFileName: 'style'
         },
         rollupOptions: {
-            // 只外部化 vue；composition-api / vuedraggable / ppt-core 打入包内（与 0.1.x 行为一致）
+            // 只外部化 vue；@vue/composition-api（2.6 回落实现）/ vuedraggable /
+            // ppt-core 打入包内（与 0.1.x/0.2.x 行为一致），宿主零配置
             external: ['vue'],
             output: { globals: { vue: 'Vue' } }
         }

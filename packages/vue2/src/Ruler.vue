@@ -50,7 +50,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { computed } from '@vue/composition-api';
+import { computed } from './compat';
 import { computeRulerTicks } from '@tthappy/ppt-core';
 
 interface ViewportStyles {

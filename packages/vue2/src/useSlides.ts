@@ -1,10 +1,10 @@
 /**
- * 编辑器文档状态（vue2，@vue/composition-api）：文档 / 页面 / 选中编辑态的读写
+ * 编辑器文档状态（vue2，组合式 API 经 ./compat 适配 2.6/2.7）：文档 / 页面 / 选中编辑态的读写
  * 与元素增删改、页面增删复制排序、剪贴板与对齐工具。外部文档深拷贝接管，
  * 避免双向渗透。与 packages/vue3/src/useSlides.ts 为同构实现，修改时请双端同步。
  */
 import Vue from 'vue';
-import { computed, reactive } from '@vue/composition-api';
+import { computed, reactive } from './compat';
 import { createEmptyDocument, genId, PptDocumentModel, PptElementModel, PptSlideType } from '@tthappy/ppt-core';
 
 interface SlidesState {

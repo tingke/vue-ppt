@@ -4,7 +4,8 @@
  *   setViewportPosition 按可视区百分比计算 viewport 位置与 canvasScale，ResizeObserver 跟随容器尺寸
  * - 拖拽：按住空格进入拖拽模式（spaceKeyState），dragViewport 平移视口；缩放/重置时重新居中
  */
-import { ref, computed, watch, onMounted, onUnmounted, Ref } from '@vue/composition-api';
+import { ref, computed, watch, onMounted, onUnmounted } from './compat';
+import type { Ref } from 'vue';
 
 // 百分比驱动缩放：30% ~ 200%，步长 5
 const MIN_PERCENTAGE = 30;

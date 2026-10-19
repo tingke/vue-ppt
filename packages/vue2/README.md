@@ -7,32 +7,20 @@
 ## 安装
 
 ```bash
-npm install @tthappy/ppt-vue2 @tthappy/ppt-core @vue/composition-api
-# Vue 2.6 还需确保已安装 vue@2.6.14
+npm install @tthappy/ppt-vue2 @tthappy/ppt-core
+# Vue 2.6 与 2.7 均零配置：组合式 API 的实现随包内置，运行时按宿主版本自适应
 ```
 
-### Vue 2.6 与 Vue 2.7 的差异
+### Vue 2.6 / 2.7 双版本实现机制
 
-本包的组合式 API 从 `@vue/composition-api` 导入，两种版本都需要安装它：
+组合式 API 统一从 `src/compat.ts` 导入，运行时按 `Vue.version` 选择实现：
 
-| 宿主版本 | 说明 |
-| --- | --- |
-| Vue 2.6 | `@vue/composition-api` 作为插件运行，**本包入口已自动 `Vue.use` 注册**，无需额外代码 |
-| Vue 2.7 | Vue 2.7 已内置 Composition API，`@vue/composition-api@1.7.4+` 会自动转发到内置实现，直接安装即可 |
+| 宿主版本 | 实现 | 说明 |
+| --- | --- | --- |
+| Vue 2.7+ | 内置 Composition API（`Vue.ref` 等） | 走原生 setup 路径 |
+| Vue 2.6 | 随包内置的 `@vue/composition-api` | 加载时自动 `Vue.use` 注册，宿主无需安装 |
 
-### Vue 2.7 项目安装报 peer 冲突？
-
-`@vue/composition-api` 自身声明的 peer 范围是 `vue >= 2.5 < 2.7`，与 Vue 2.7 宿主组合时 npm 会报 `ERESOLVE` 冲突（本包已将其声明为可选 peer，不会主动触发）。若你的项目里显式安装它，使用以下任一方式：
-
-```bash
-# npm：放宽 peer 检查
-npm install @vue/composition-api --legacy-peer-deps
-
-# 或使用 pnpm / yarn（对 peer 冲突更宽松）
-pnpm add @vue/composition-api
-```
-
-在 Vue 2.7 下共存是安全的（运行时自动转发到内置实现）。
+**关键约束**：Vue 2.7 下绝不注册该插件——它面向 Vue 2.6，靠全局 mixin 把 `setup()` 挂进 `data()` 延迟调用；而 2.7 原生也会调用 `setup()`，两者叠加会导致 setup 双重执行且互缺上下文（provide 警告、watch 崩溃、setup 返回值丢失，编辑器渲染失败）。宿主项目自行安装/注册 `@vue/composition-api` 不受影响（插件有防重复安装保护，且 2.7 宿主上本包不会用到它）。
 
 ## 快速开始
 

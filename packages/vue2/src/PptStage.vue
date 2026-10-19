@@ -96,7 +96,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { computed, provide, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api';
+import { computed, provide, reactive, ref, onMounted, onUnmounted, watch } from './compat';
 import { createEmitter, EDITOR_EMITTER, createHotkeyHandler, markHotkeyScope as markScope, createMediaTextElement, PptBizVariableNode, PptDocumentModel, PptElementModel, PptMediaElement } from '@tthappy/ppt-core';
 import { useSlides } from './useSlides';
 import { useCanvasScale } from './useCanvasScale';
@@ -117,7 +117,7 @@ export default Vue.extend({
     /** 媒体组件下拉选项树（编辑器级配置，不进文档数据） */
     mediaOptions: { type: Array as unknown as () => PptBizVariableNode[], default: (): PptBizVariableNode[] => [] },
   },
-  setup(props, { refs }) {
+  setup(props) {
     // 编辑器实例级事件转发器：Toolbar / TextElement 等经 inject 获取，
     // 页面上多个 PptStage 实例时富文本命令 / 状态回显互不串扰
     provide(EDITOR_EMITTER, createEmitter());
@@ -129,11 +129,13 @@ export default Vue.extend({
     const initialDoc = props.document as PptDocumentModel | undefined;
     const state = useSlides(initialDoc ? { document: initialDoc } : undefined);
 
-    const canvasRef = computed(() => (refs.canvas as HTMLElement) || null);
+    // Vue 2.7 模板 ref：setup 返回的 canvas 与 <div ref="canvas"> 自动绑定
+    //（2.7 的 setup context 无 refs，computed(() => refs.canvas) 拿不到元素）
+    const canvas = ref<HTMLElement | null>(null);
     const docWidth = computed(() => state.doc.width);
     const docHeight = computed(() => state.doc.height);
 
-    const scaleState = useCanvasScale(canvasRef as any, docWidth, docHeight);
+    const scaleState = useCanvasScale(canvas, docWidth, docHeight);
 
     // 文档尺寸变化时重新计算视口
     watch([docWidth, docHeight], () => scaleState.setViewportPosition());
@@ -314,7 +316,7 @@ export default Vue.extend({
 
     return {
       state,
-      canvasRef,
+      canvas,
       rulerViewport,
       onGuideUpdate,
       onEditorMouseDown,
