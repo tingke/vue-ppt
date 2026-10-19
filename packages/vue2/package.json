@@ -1,6 +1,6 @@
 {
   "name": "@tthappy/ppt-vue2",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publishConfig": { "access": "public" },
   "browserslist": [
     "chrome >= 61",
@@ -10,15 +10,23 @@
     "ios_saf >= 11",
     "not dead"
   ],
-  "main": "./dist/vue-ppt-vue2.common.js",
-  "module": "./dist/vue-ppt-vue2.common.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./style.css": "./dist/style.css"
+  },
   "files": [
     "dist",
     "types"
   ],
   "scripts": {
-    "build": "vue-cli-service build --target lib --name vue-ppt-vue2 src/index.ts"
+    "build": "vite build"
   },
   "peerDependencies": {
     "vue": ">=2.6.14 <3",
@@ -28,14 +36,11 @@
     "@vue/composition-api": { "optional": true }
   },
   "devDependencies": {
-    "@babel/core": "^8.0.7",
-    "@vue/cli-plugin-typescript": "~5.0.8",
-    "@vue/cli-service": "~5.0.8",
+    "@vitejs/plugin-vue2": "^2.3.1",
     "@vue/composition-api": "^1.7.2",
-    "babel-loader": "^10.1.1",
     "typescript": "~5.5.4",
-    "vue": "2.6.14",
-    "vue-template-compiler": "2.6.14"
+    "vite": "^5.4.0",
+    "vue": "2.7.16"
   },
   "dependencies": {
     "@tthappy/ppt-core": "workspace:*",
