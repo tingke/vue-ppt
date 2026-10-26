@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@tthappy/ppt-core':
+        specifier: workspace:*
+        version: link:packages/core
       typescript:
         specifier: ~5.5.4
         version: 5.5.4

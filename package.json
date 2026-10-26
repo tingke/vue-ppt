@@ -13,6 +13,7 @@
     "typecheck": "pnpm --filter @tthappy/ppt-core typecheck && pnpm --filter @tthappy/ppt-vue3 typecheck"
   },
   "devDependencies": {
+    "@tthappy/ppt-core": "workspace:*",
     "typescript": "~5.5.4"
   }
 }

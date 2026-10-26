@@ -1,5 +1,6 @@
 <template>
-  <div class="vpk-thumbnails" @contextmenu.prevent="openMenu($event, 'blank')">
+  <!-- 页面缩略图面板（分端壳：vuedraggable@2 各用各的，排序/右键菜单逻辑单源于 shared，P1-3） -->
+  <div class="vpk-thumbnails" @contextmenu.prevent.stop="openMenu($event, 'blank')">
     <Draggable
       class="vpk-thumb-list"
       :list="localSlides"
@@ -26,186 +27,84 @@
       </div>
     </Draggable>
 
-    <div
+    <!-- 右键菜单：ContextMenu 单源（自挂 body） -->
+    <ContextMenu
       v-if="menu.visible"
-      class="vpk-contextmenu"
-      :style="{ left: menu.x + 'px', top: menu.y + 'px' }"
-    >
-      <template v-for="(item, i) in menuItems">
-        <div v-if="item.divider" :key="'d' + i" class="vpk-contextmenu-divider" />
-        <div
-          v-else
-          :key="'i' + i"
-          class="vpk-contextmenu-item"
-          :class="{ disabled: item.disabled }"
-          @mouseenter="onItemMouseEnter(item, i)"
-          @mouseleave="closeSubMenu"
-          @click="handleItemClick(item, i)"
-        >
-          <span class="vpk-contextmenu-text">{{ item.text }}</span>
-          <span v-if="item.subText" class="vpk-contextmenu-sub">{{ item.subText }}</span>
-          <span v-if="hasChildren(item)" class="vpk-contextmenu-arrow">›</span>
-          <!-- 二级菜单：切换类型 -->
-          <div v-if="menu.subIndex === i && hasChildren(item)" class="vpk-contextmenu vpk-contextmenu-submenu">
-            <div
-              v-for="(child, j) in item.children"
-              :key="j"
-              class="vpk-contextmenu-item"
-              @click.stop="handleMenuClick(child)"
-            >
-              <span class="vpk-contextmenu-text">{{ child.text }}</span>
-              <span v-if="child.subText" class="vpk-contextmenu-sub">{{ child.subText }}</span>
-            </div>
-          </div>
-        </div>
-      </template>
-    </div>
+      :x="menu.x"
+      :y="menu.y"
+      :items="menuItems"
+      @select="onMenuSelect"
+      @close="closeMenu"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent, computed, ref, watch } from '@vpk/vue-api';
+import type { PropType } from '@vpk/vue-api';
 import Draggable from 'vuedraggable';
-import { getSlideTypeLabel, PptSlideModel, PptSlideType, SLIDE_TYPES } from '@tthappy/ppt-core';
-import SlideCanvas from './SlideCanvas.vue';
+import { getSlideTypeLabel } from '@tthappy/ppt-core';
+import type { PptDocumentModel, PptSlideModel, PptSlideType } from '@tthappy/ppt-core';
+import { useSlideContextMenu } from '@vpk/shared/contextMenu';
+import type { MenuItem } from '@vpk/shared/contextMenu';
+import SlideCanvas from '@vpk/shared/components/SlideCanvas.vue';
+import ContextMenu from '@vpk/shared/components/ContextMenu.vue';
 
-interface MenuItem {
-  text?: string;
-  subText?: string;
-  disabled?: boolean;
-  handler?: (index: number) => void;
-  /** 二级菜单项（如「切换类型」的类型列表） */
-  children?: MenuItem[];
-  divider?: boolean;
-}
-
-export default Vue.extend({
+export default defineComponent({
   name: 'SlideThumbnails',
-  components: { Draggable, SlideCanvas },
+  components: { Draggable, SlideCanvas, ContextMenu },
   props: {
-    doc: { type: Object, required: true },
-    slideIndex: { type: Object, required: true },
+    doc: { type: Object as PropType<PptDocumentModel>, required: true },
+    slideIndex: { type: Object as PropType<{ value: number }>, required: true },
   },
-  data() {
-    return {
-      // vuedraggable@2 需要 list/model 可变数组，用副本在拖拽结束后同步回父组件
-      localSlides: [] as PptSlideModel[],
-      menu: { visible: false, x: 0, y: 0, targetIndex: -1, subIndex: -1 } as {
-        visible: boolean; x: number; y: number; targetIndex: number; subIndex: number;
+  emits: ['select', 'create', 'copy', 'remove', 'move', 'type-change'],
+  setup(props, { emit }) {
+    // vuedraggable@2 需要 list/model 可变数组，用副本在拖拽结束后同步回父组件
+    const localSlides = ref<PptSlideModel[]>([]);
+    watch(
+      () => props.doc.slides,
+      (slides) => {
+        localSlides.value = slides.slice();
       },
-    };
-  },
-  computed: {
-    thumbStyle(): Record<string, string> {
-      const ratio = this.doc.height / this.doc.width;
+      { immediate: true }
+    );
+
+    const thumbStyle = computed<Record<string, string>>(() => {
+      const ratio = props.doc.height / props.doc.width;
       const thumbWidth = 120;
       return { width: thumbWidth + 'px', height: Math.round(thumbWidth * ratio) + 'px' };
-    },
+    });
+
     // 缩略图按容器宽度等比缩小画布
-    thumbScale(): number {
-      return 120 / this.doc.width;
-    },
-    menuItems(): MenuItem[] {
-      if (this.menu.targetIndex < 0) {
-        return [{ text: '新建页面', subText: 'Enter', handler: () => this.$emit('create') }];
-      }
-      const index = this.menu.targetIndex;
-      const onlyOne = this.doc.slides.length <= 1;
-      // 二级菜单：仅列出当前类型之外的另外 2 种
-      const slide = this.doc.slides[index] as PptSlideModel | undefined;
-      const typeChildren: MenuItem[] = SLIDE_TYPES
-        .filter((t) => t.value !== (slide && slide.slideType || 'custom'))
-        .map((t) => ({ text: t.label, handler: (i: number) => this.$emit('type-change', i, t.value as PptSlideType) }));
-      const items: MenuItem[] = [
-        { text: '新建页面', subText: 'Enter', handler: (i) => this.$emit('create') },
-        { text: '复制页面', subText: 'Ctrl + D', handler: (i) => this.$emit('copy', i) },
-        { text: '删除页面', subText: 'Delete', disabled: onlyOne, handler: (i) => this.$emit('remove', i) },
-        { divider: true },
-        { text: '切换类型', children: typeChildren },
-      ];
-      // 一级与二级菜单项均闭包绑定目标页 index
-      return items.map((item) => ({
-        ...item,
-        handler: item.handler ? () => item.handler!(index) : undefined,
-        children: item.children && item.children.length
-          ? item.children.map((child) => ({
-              ...child,
-              handler: child.handler ? () => child.handler!(index) : undefined,
-            }))
-          : undefined,
-      }));
-    },
-  },
-  watch: {
-    'doc.slides': {
-      immediate: true,
-      handler(slides: PptSlideModel[]) {
-        this.localSlides = slides.slice();
-      },
-    },
-  },
-  mounted() {
-    document.addEventListener('mousedown', this.onGlobalMouseDown);
-    document.addEventListener('contextmenu', this.onGlobalContextMenu);
-  },
-  beforeDestroy() {
-    document.removeEventListener('mousedown', this.onGlobalMouseDown);
-    document.removeEventListener('contextmenu', this.onGlobalContextMenu);
-  },
-  methods: {
-    getSlideTypeLabel,
-    fillDigit(n: number): string {
+    const thumbScale = computed(() => 120 / props.doc.width);
+
+    function fillDigit(n: number): string {
       return String(n).padStart(2, '0');
-    },
+    }
+
     // 拖拽排序
-    onDragEnd(eventData: { newIndex?: number; oldIndex?: number }) {
-      const newIndex = eventData.newIndex || 0;
-      const oldIndex = eventData.oldIndex || 0;
+    function onDragEnd(eventData: { newIndex?: number; oldIndex?: number }) {
+      const newIndex = eventData.newIndex ?? 0;
+      const oldIndex = eventData.oldIndex ?? 0;
       if (oldIndex === newIndex) return;
-      this.$emit('move', oldIndex, newIndex);
-      this.$emit('select', newIndex);
-    },
-    openMenu(e: MouseEvent, type: 'item' | 'blank', index?: number) {
-      this.menu.visible = true;
-      this.menu.x = e.clientX;
-      this.menu.y = e.clientY;
-      // 注意不能写 index || -1：第一页 index 为 0 是 falsy，会被误判成空白区域
-      this.menu.targetIndex = type === 'item' ? (index ?? -1) : -1;
-      this.menu.subIndex = -1;
-    },
-    closeMenu() {
-      this.menu.visible = false;
-    },
-    hasChildren(item: MenuItem): boolean {
-      return !!(item.children && item.children.length);
-    },
-    // 悬停展开二级菜单（子菜单为条目子元素，移入不会触发 mouseleave）
-    onItemMouseEnter(item: MenuItem, i: number) {
-      this.menu.subIndex = this.hasChildren(item) ? i : -1;
-    },
-    closeSubMenu() {
-      this.menu.subIndex = -1;
-    },
-    // 一级项：有子菜单仅切换展开态，否则执行并关闭菜单
-    handleItemClick(item: MenuItem, i: number) {
-      if (item.disabled) return;
-      if (this.hasChildren(item)) {
-        this.menu.subIndex = this.menu.subIndex === i ? -1 : i;
-        return;
-      }
-      this.handleMenuClick(item);
-    },
-    handleMenuClick(item: MenuItem) {
-      item.handler?.(this.menu.targetIndex);
-      this.closeMenu();
-    },
-    onGlobalMouseDown(e: MouseEvent) {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.vpk-contextmenu')) this.closeMenu();
-    },
-    onGlobalContextMenu() {
-      this.closeMenu();
-    },
+      emit('move', oldIndex, newIndex);
+      emit('select', newIndex);
+    }
+
+    // 右键菜单（状态与菜单项推导单源）
+    const { menu, menuItems, openMenu, closeMenu } = useSlideContextMenu(props.doc, {
+      create: () => emit('create'),
+      copy: (index) => emit('copy', index),
+      remove: (index) => emit('remove', index),
+      typeChange: (index, type: PptSlideType) => emit('type-change', index, type),
+    });
+
+    function onMenuSelect(item: MenuItem) {
+      if (item.handler) item.handler(menu.targetIndex);
+      closeMenu();
+    }
+
+    return { localSlides, thumbStyle, thumbScale, fillDigit, onDragEnd, getSlideTypeLabel, menu, menuItems, openMenu, closeMenu, onMenuSelect };
   },
 });
 </script>
@@ -271,42 +170,4 @@ export default Vue.extend({
   height: 100%;
   pointer-events: none;
 }
-</style>
-
-<style>
-.vpk-contextmenu {
-  position: fixed;
-  z-index: 3000;
-  min-width: 180px;
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  padding: 4px 0;
-  font-size: 13px;
-}
-.vpk-contextmenu-item {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 6px 12px;
-  cursor: pointer;
-  color: #303133;
-}
-.vpk-contextmenu-item:hover { background: #f5f7fa; color: var(--vpk-primary, #409eff); }
-.vpk-contextmenu-item.disabled { color: #c0c4cc; cursor: not-allowed; }
-.vpk-contextmenu-item.disabled:hover { background: transparent; color: #c0c4cc; }
-.vpk-contextmenu-sub { font-size: 12px; color: #909399; }
-.vpk-contextmenu-arrow { font-size: 14px; line-height: 1; color: #909399; }
-/* 二级菜单：锚定在一级条目右侧（覆盖 .vpk-contextmenu 的 fixed 定位） */
-.vpk-contextmenu-submenu {
-  position: absolute;
-  left: 100%;
-  top: -5px;
-  z-index: 1;
-  min-width: 160px;
-}
-.vpk-contextmenu-divider { height: 1px; margin: 4px 0; background: #ebeef5; }
 </style>

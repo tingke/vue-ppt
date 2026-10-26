@@ -9,6 +9,16 @@ import { resolve } from 'node:path';
 // "Cannot read properties of undefined (reading 'call')" 的根因）。
 export default defineConfig({
     plugins: [vue2()],
+    resolve: {
+        alias: [
+            // P1 模型 B（共享源码 + 按端编译）：shared 单源码打入本包产物；
+            // reactivity 统一出口落到 vue-api（2.7 内置 / 2.6 @vue/composition-api 择轨）；
+            // 端内组件出口（SlideThumbnails 分端壳）供单源 PptEditor 引用
+            { find: '@vpk/shared', replacement: resolve(__dirname, '../shared/src') },
+            { find: '@vpk/vue-api', replacement: resolve(__dirname, 'src/vue-api.ts') },
+            { find: '@vpk/shells', replacement: resolve(__dirname, 'src/shells.ts') },
+        ],
+    },
     build: {
         lib: {
             entry: resolve(__dirname, 'src/index.ts'),

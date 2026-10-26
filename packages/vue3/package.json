@@ -1,6 +1,6 @@
 {
   "name": "@tthappy/ppt-vue3",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publishConfig": { "access": "public" },
   "type": "module",
   "main": "./dist/index.cjs",
