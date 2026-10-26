@@ -25,8 +25,10 @@ export type AlignLineSet = { h: AlignLine[]; v: AlignLine[] };
 
 /** 缩放最小尺寸钳制 */
 export const MIN_SIZE = 20;
-/** 吸附判定阈值（文档单位），兼作拖拽误操作判定阈值（屏幕像素） */
+/** 吸附判定阈值（文档单位） */
 export const SORPTION_RANGE = 5;
+/** 拖拽误操作判定阈值（屏幕像素）：首帧位移小于该值视为点击而非拖动 */
+export const MISOP_RANGE = 5;
 
 /**
  * 收集吸附线：其他元素的上 / 下 / 中边、左 / 右 / 中线，加画布边界与中心。

@@ -18,6 +18,13 @@ export const FONT_FAMILIES: { label: string; value: string }[] = [
   { label: 'Courier New', value: '"Courier New", monospace' },
 ];
 
+/** 文本默认字号 */
+export const DEFAULT_FONT_SIZE = 16;
+/** 文本默认颜色（正文主色） */
+export const DEFAULT_TEXT_COLOR = '#303133';
+/** 行距缺省倍数（缺省继承设计下的渲染兜底值） */
+export const DEFAULT_LINE_HEIGHT = 1.4;
+
 /** 字号与行距候选项 */
 export const FONT_SIZES: number[] = [12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 60, 72];
 export const LINE_HEIGHTS: number[] = [1, 1.15, 1.2, 1.4, 1.5, 1.75, 2, 2.5, 3];

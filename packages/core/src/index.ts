@@ -256,5 +256,6 @@ export * from './geometry';
 export * from './history';
 export * from './hotkeys';
 export * from './ruler';
+export * from './table';
 export * from './richeditor';
 export * from './icons';

@@ -4,6 +4,7 @@
  * 保证双端插入行为一致。图片文件读取工具也集中在此。
  */
 import type { PptBizTableElement, PptBizTextElement, PptImageElement, PptMediaElement, PptTableElement, PptTableCell, PptTextElement } from './index';
+import { DEFAULT_TEXT_COLOR } from './presets';
 
 let idCounter = 0;
 
@@ -34,7 +35,7 @@ export function createTextElement(doc: DocSize): PptTextElement {
     height,
     text: '请输入文字',
     fontSize: 20,
-    color: '#303133',
+    color: DEFAULT_TEXT_COLOR,
     // 其余可选属性（fontFamily/bold/align/lineHeight/fill）按「缺省继承」设计不预置：
     // 渲染层对缺省值兜底，且可区分「未设置」与「显式置空」
   };
@@ -76,7 +77,7 @@ export function createMediaTextElement(media: { x: number; y: number; width: num
     height: 44,
     text: '',
     fontSize: 14,
-    color: '#303133',
+    color: DEFAULT_TEXT_COLOR,
   };
 }
 
@@ -101,8 +102,8 @@ export function createImageElement(
   };
 }
 
-/** 插入表格元素：单元格宽 ≤100、高 36，宽度占画布 80% 并居中 */
-export function createTableElement(row: number, col: number, doc: DocSize): PptTableElement {
+/** 插入表格元素：单元格宽 ≤100、高 36，宽度占画布 80% 并居中（参数顺序与 createBizTableElement 一致） */
+export function createTableElement(doc: DocSize, row: number, col: number): PptTableElement {
   const cellWidth = Math.min(100, (doc.width * 0.8) / col);
   const cellHeight = 36;
   const width = Math.round(cellWidth * col);
@@ -132,7 +133,7 @@ export function createTableElement(row: number, col: number, doc: DocSize): PptT
 
 /** 插入富表格元素：结构与表格一致（单元格为业务文本，支持 fx 业务字段混排），默认 3x3 */
 export function createBizTableElement(doc: DocSize, row = 3, col = 3): PptBizTableElement {
-  return { ...createTableElement(row, col, doc), type: 'bizTable' };
+  return { ...createTableElement(doc, row, col), type: 'bizTable' };
 }
 
 /** 加载图片并获取原始尺寸（dataURL / 图片链接均可） */

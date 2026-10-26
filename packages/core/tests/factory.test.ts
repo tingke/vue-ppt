@@ -60,7 +60,7 @@ describe('createImageElement', () => {
 
 describe('createTableElement', () => {
   it('行列结构与默认样式齐全', () => {
-    const el = createTableElement(3, 4, doc);
+    const el = createTableElement(doc, 3, 4);
     expect(el.type).toBe('table');
     expect(el.data.length).toBe(3);
     expect(el.data[0].length).toBe(4);
@@ -77,7 +77,7 @@ describe('createTableElement', () => {
   });
 
   it('单元格 id 全局唯一', () => {
-    const a = createTableElement(8, 8, doc);
+    const a = createTableElement(doc, 8, 8);
     const ids = new Set(a.data.flat().map((c) => c.id));
     expect(ids.size).toBe(64);
   });
@@ -134,6 +134,6 @@ describe('createBizTableElement', () => {
     const el = createBizTableElement(doc, 2, 5);
     expect(el.data.length).toBe(2);
     expect(el.data[0].length).toBe(5);
-    expect(el.width).toBe(createTableElement(2, 5, doc).width);
+    expect(el.width).toBe(createTableElement(doc, 2, 5).width);
   });
 });
