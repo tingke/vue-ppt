@@ -21,6 +21,8 @@ import iconOrderDown from './icons/order-down.svg';
 import iconOrderBottom from './icons/order-bottom.svg';
 import iconRuler from './icons/ruler.svg';
 import iconGuide from './icons/guide.svg';
+import iconUndo from './icons/undo.svg';
+import iconRedo from './icons/redo.svg';
 
 /** 完整 SVG 字符串（含 currentColor 描边），经 v-html 内联渲染 */
 export const TOOLBAR_ICONS = {
@@ -60,6 +62,10 @@ export const TOOLBAR_ICONS = {
   ruler: iconRuler,
   /** 参考线（画布参考线显隐） */
   guide: iconGuide,
+  /** 撤销 */
+  undo: iconUndo,
+  /** 重做 */
+  redo: iconRedo,
 };
 
 export type ToolbarIconName = keyof typeof TOOLBAR_ICONS;

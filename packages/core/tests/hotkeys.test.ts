@@ -9,6 +9,8 @@ function createState(): HotkeyState & {
   copyCalls: string[];
   removeCalls: string[];
   updates: { id: string; props: Record<string, unknown> }[];
+  undoCalls: number;
+  redoCalls: number;
 } {
   const el = createTextElement({ width: 960, height: 540 });
   return {
@@ -21,6 +23,8 @@ function createState(): HotkeyState & {
     copyCalls: [],
     removeCalls: [],
     updates: [],
+    undoCalls: 0,
+    redoCalls: 0,
     setClipboard(id: string) {
       this.clipboardCalls.push(id);
       this.clipboard.value = el;
@@ -36,6 +40,12 @@ function createState(): HotkeyState & {
     },
     updateElement(id: string, props) {
       this.updates.push({ id, props });
+    },
+    undo() {
+      this.undoCalls += 1;
+    },
+    redo() {
+      this.redoCalls += 1;
     },
   };
 }
@@ -93,6 +103,27 @@ describe('createHotkeyHandler', () => {
     fire('Delete');
     fire('Backspace');
     expect(state.removeCalls).toEqual([state.selectedElement.value!.id, state.selectedElement.value!.id]);
+  });
+
+  it('Ctrl/Cmd + Z 撤销，Shift 反转为重做，Ctrl/Cmd + Y 重做', () => {
+    fire('z', { ctrlKey: true });
+    expect(state.undoCalls).toBe(1);
+    expect(state.redoCalls).toBe(0);
+    fire('Z', { metaKey: true, shiftKey: true });
+    expect(state.redoCalls).toBe(1);
+    fire('y', { ctrlKey: true });
+    expect(state.redoCalls).toBe(2);
+  });
+
+  it('焦点在富文本内时撤销 / 重做不接管（ProseMirror 内部历史优先）', () => {
+    const editable = document.createElement('div');
+    editable.className = 'ProseMirror';
+    document.body.appendChild(editable);
+    keydown(editable, 'z', { ctrlKey: true });
+    keydown(editable, 'y', { ctrlKey: true });
+    expect(state.undoCalls).toBe(0);
+    expect(state.redoCalls).toBe(0);
+    editable.remove();
   });
 
   it('方向键微移 1 单位，Shift ×10', () => {

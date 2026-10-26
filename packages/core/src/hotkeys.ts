@@ -23,7 +23,9 @@ export interface HotkeyState {
   pasteElement(): void;
   copyElement(id: string): void;
   removeElement(id: string): void;
-  updateElement(id: string, props: Partial<PptElementModel>): void;
+  updateElement(id: string, props: Partial<PptElementModel>, options?: { historyTag?: string }): void;
+  undo(): void;
+  redo(): void;
 }
 
 /**
@@ -76,6 +78,21 @@ export function createHotkeyHandler(state: HotkeyState): (e: KeyboardEvent) => v
     const mod = e.ctrlKey || e.metaKey;
     const selected = state.selectedElement.value;
 
+    // 撤销 / 重做：Cmd/Ctrl+Z（按住 Shift 反转为重做，兼容 Mac 惯例）、Cmd/Ctrl+Y。
+    // 焦点在富文本内时已在上方放行：编辑中的文字由 ProseMirror 内部历史处理，
+    // 退出编辑后走元素级历史（与主流编辑器行为一致）
+    if (mod && (e.key === 'z' || e.key === 'Z')) {
+      e.preventDefault();
+      if (e.shiftKey) state.redo();
+      else state.undo();
+      return;
+    }
+    if (mod && (e.key === 'y' || e.key === 'Y')) {
+      e.preventDefault();
+      state.redo();
+      return;
+    }
+
     if (mod && (e.key === 'c' || e.key === 'C')) {
       if (selected) state.setClipboard(selected.id);
       // 不 preventDefault：保留系统复制行为（如页面存在选中文本）
@@ -103,15 +120,19 @@ export function createHotkeyHandler(state: HotkeyState): (e: KeyboardEvent) => v
       return;
     }
 
-    // 方向键微移：Shift ×10
+    // 方向键微移：Shift ×10（historyTag 使连按 / 长按合并为一步历史）
     const delta = ARROW_DELTAS[e.key];
     if (delta && selected) {
       e.preventDefault();
       const step = e.shiftKey ? 10 : 1;
-      state.updateElement(selected.id, {
-        x: selected.x + delta[0] * step,
-        y: selected.y + delta[1] * step,
-      });
+      state.updateElement(
+        selected.id,
+        {
+          x: selected.x + delta[0] * step,
+          y: selected.y + delta[1] * step,
+        },
+        { historyTag: 'drag' }
+      );
     }
   };
 }
