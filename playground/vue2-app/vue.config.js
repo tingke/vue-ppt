@@ -2,6 +2,8 @@ const path = require('path');
 
 module.exports = {
   transpileDependencies: ['@tthappy'],
+  // GitHub Pages 上 Vue 2 demo 挂在 Vue 3 demo 的子路径下；本地构建保持根路径
+  publicPath: process.env.PUBLIC_PATH || '/',
   // 版本组合说明：运行时 vue 固定 2.6.14（dependencies），模板编译器 vue-template-compiler
   // 用 2.7.16。原因：monorepo 里 packages/vue2 的 vite 构建依赖 vue 2.7（@vitejs/plugin-vue2
   // 需要 vue/compiler-sfc），pnpm 会把 2.7.16 提升到 .pnpm 公共层，vue-loader 从自身路径

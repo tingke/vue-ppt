@@ -10,7 +10,7 @@
  */
 import { reactive, computed, set, del } from '@vpk/vue-api';
 import { createEmptyDocument, createHistory, genId } from '@tthappy/ppt-core';
-import type { PptDocumentModel, PptElementModel, PptSlideModel, PptSlideType } from '@tthappy/ppt-core';
+import type { PptDocumentModel, PptElementModel, PptSlideModel } from '@tthappy/ppt-core';
 
 // 元素 / 页面深拷贝：doc 为 reactive Proxy，structuredClone 无法克隆（DataCloneError），
 // 统一走 JSON 序列化（元素模型字段均为 JSON 兼容类型，vue2 需兼容不支持 structuredClone 的旧浏览器）
@@ -18,7 +18,9 @@ function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-export function useSlides(options?: { document?: PptDocumentModel }) {
+export function useSlides(options?: { document?: PptDocumentModel; defaultSlideType?: string }) {
+  // 缺省页面类型（业务经 slideTypes 配置下发）：缺省类型的页面不写 slideType 字段
+  const defaultSlideType = options?.defaultSlideType;
   // 外部传入的文档深拷贝后接管：编辑原地 mutate 调用方对象会造成双向渗透。
   // 缺 slides 数组的残缺文档（如后端初始模板返回空对象）按空文档兜底，
   // 避免 doc.slides undefined 连锁崩溃
@@ -120,10 +122,10 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
     return slide.elements.find((e) => e.id === selectedElementId.value) ?? null;
   });
 
-  function createSlide(type?: PptSlideType) {
+  function createSlide(type?: string) {
     const slide: PptSlideModel = { id: genId(), elements: [] };
-    // 自定义页为缺省值，不写入字段（与「缺省继承」设计一致）
-    if (type && type !== 'custom') slide.slideType = type;
+    // 缺省类型不写入字段（与「缺省继承」设计一致）
+    if (type && type !== defaultSlideType) slide.slideType = type;
     doc.slides.splice(slideIndex.value + 1, 0, slide);
     slideIndex.value += 1;
     recordHistory();
@@ -156,10 +158,10 @@ export function useSlides(options?: { document?: PptDocumentModel }) {
 
   // 切换指定页类型（如缩略图右键快捷切换）。
   // slideType 可能是页面对象上不存在的字段：vue2 必须走 set / del 保证响应式（del = Vue.delete）
-  function setSlideType(index: number, type: PptSlideType) {
+  function setSlideType(index: number, type: string) {
     const slide = doc.slides[index];
     if (!slide) return;
-    if (type === 'custom') del(slide as unknown as Record<string, unknown>, 'slideType');
+    if (type === defaultSlideType) del(slide as unknown as Record<string, unknown>, 'slideType');
     else set(slide as unknown as Record<string, unknown>, 'slideType', type);
     recordHistory();
   }

@@ -8,6 +8,7 @@
       <SlideThumbnails
         :doc="state.doc"
         :slide-index="state.slideIndex"
+        :slide-types="slideTypesHolder.list"
         @select="onSelect"
         @create="state.createSlide()"
         @copy="state.copySlide($event)"
@@ -102,8 +103,8 @@ import {
   markHotkeyScope,
   createMediaTextElement,
 } from '@tthappy/ppt-core';
-import type { PptBizVariableNode, PptDocumentModel, PptElementModel, PptMediaElement, PptSlideType } from '@tthappy/ppt-core';
-import { BIZ_VARIABLES_KEY, MEDIA_OPTIONS_KEY } from '../emitter';
+import type { PptBizVariableNode, PptDocumentModel, PptElementModel, PptMediaElement, PptSlideTypeOption } from '@tthappy/ppt-core';
+import { BIZ_VARIABLES_KEY, MEDIA_OPTIONS_KEY, SLIDE_TYPES_KEY } from '../emitter';
 import { useSlides } from '../useSlides';
 import { useCanvasScale } from '../useCanvasScale';
 import type { MenuItem } from '../contextMenu';
@@ -126,6 +127,9 @@ export default defineComponent({
     bizVariables: { type: Array as unknown as () => PptBizVariableNode[], default: undefined },
     /** 媒体组件下拉选项树（编辑器级配置，不进文档数据），runtime type 同上须为 Array */
     mediaOptions: { type: Array as unknown as () => PptBizVariableNode[], default: undefined },
+    /** 页面类型候选项（编辑器级配置，业务提供，不进文档数据），runtime type 同上须为 Array：
+     *  新建幻灯片下拉 / 缩略图角标与右键切换类型共用；default 项为缺省类型（不写 slideType 字段） */
+    slideTypes: { type: Array as unknown as () => PptSlideTypeOption[], default: undefined },
   },
   emits: ['save'],
   setup(props, { emit }) {
@@ -141,6 +145,7 @@ export default defineComponent({
     //（引用不变，同步时只 splice 原地替换内容，inject 方始终能跟踪到更新）
     const bizVariablesHolder = reactive({ list: props.bizVariables || [] });
     const mediaOptionsHolder = reactive({ list: props.mediaOptions || [] });
+    const slideTypesHolder = reactive({ list: props.slideTypes || [] });
     watch(
       () => props.bizVariables,
       (val) => {
@@ -155,11 +160,22 @@ export default defineComponent({
         mediaOptionsHolder.list.splice(0, mediaOptionsHolder.list.length, ...(val || []));
       },
     );
+    watch(
+      () => props.slideTypes,
+      (val) => {
+        if (val === slideTypesHolder.list) return;
+        slideTypesHolder.list.splice(0, slideTypesHolder.list.length, ...(val || []));
+      },
+    );
     provide(BIZ_VARIABLES_KEY, bizVariablesHolder.list);
     provide(MEDIA_OPTIONS_KEY, mediaOptionsHolder.list);
+    provide(SLIDE_TYPES_KEY, slideTypesHolder.list);
 
     const initialDoc = props.document as PptDocumentModel | undefined;
-    const state = useSlides(initialDoc ? { document: initialDoc } : undefined);
+    // 缺省页面类型随 slideTypes 配置下发（default 项优先，否则第一项）
+    const defaultSlideType = (props.slideTypes || []).find((t) => t.default)?.value
+      ?? (props.slideTypes || [])[0]?.value;
+    const state = useSlides(initialDoc ? { document: initialDoc, defaultSlideType } : { defaultSlideType });
 
     // 模板 ref：setup 返回的 canvasRef 与 <div ref="canvasRef"> 自动绑定
     const canvasRef = ref<HTMLElement | null>(null);
@@ -272,7 +288,7 @@ export default defineComponent({
     function onThumbsMove(from: number, to: number) {
       state.moveSlide(from, to);
     }
-    function onThumbsTypeChange(index: number, type: PptSlideType) {
+    function onThumbsTypeChange(index: number, type: string) {
       state.setSlideType(index, type);
     }
 
@@ -366,6 +382,7 @@ export default defineComponent({
     return {
       state,
       canvasRef,
+      slideTypesHolder,
       rulerViewport,
       onGuideUpdate,
       onEditorMouseDown,

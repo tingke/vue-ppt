@@ -167,15 +167,16 @@
 
       <!-- ==================== 插入：幻灯片 / 背景 / 组件（图标数据取 core TOOLBAR_ICONS） ==================== -->
       <div v-else class="vpk-tool-groups">
-        <!-- 幻灯片：点击弹出类型下拉（自定义页 / 特殊点位页（循环）/ 点位页（循环）） -->
+        <!-- 幻灯片：有类型配置时点击弹出类型下拉；未配置时点击直接新建缺省类型页 -->
         <div class="vpk-tool-group">
           <div class="vpk-group-items">
             <div class="vpk-tool-anchor">
               <button type="button" class="vpk-tool-btn" title="新建幻灯片"
-                :class="{ active: slideTypeMenuVisible }" @click="toggleSlideTypeMenu($event)">
+                :class="{ active: slideTypeMenuVisible }"
+                @click="slideTypes.length ? toggleSlideTypeMenu($event) : onCreateSlide()">
                 <span class="vpk-icon" v-html="icons.slide"></span>
                 <span>新建幻灯片</span>
-                <i class="vpk-caret-down" />
+                <i v-if="slideTypes.length" class="vpk-caret-down" />
               </button>
 
               <div v-if="slideTypeMenuVisible" class="vpk-slide-type-menu" :style="slideTypePopupStyle">
@@ -291,7 +292,6 @@ import {
   ORDER_OPTIONS,
   RICH_TEXT_COMMAND,
   RICH_TEXT_STATE,
-  SLIDE_TYPES,
   TOOLBAR_ICONS,
   DEFAULT_TEXT_COLOR,
   createBizTextElement,
@@ -301,8 +301,8 @@ import {
   readFileAsImage,
   stripRichTextStyle,
 } from '@tthappy/ppt-core';
-import type { EditorEmitter, PptDocumentModel, PptElementModel, PptImageElement, PptSlideType, PptTextAlign, PptTextElement, RichTextState } from '@tthappy/ppt-core';
-import { sharedEmitter } from '../emitter';
+import type { EditorEmitter, PptDocumentModel, PptElementModel, PptImageElement, PptSlideTypeOption, PptTextAlign, PptTextElement, RichTextState } from '@tthappy/ppt-core';
+import { sharedEmitter, SLIDE_TYPES_KEY } from '../emitter';
 import { useToolbarPopups } from '../useToolbarPopups';
 import { useSlides } from '../useSlides';
 import ColorPopup from './toolbar/ColorPopup.vue';
@@ -408,7 +408,8 @@ export default defineComponent({
     const lineHeights = LINE_HEIGHTS;
     const alignOptions = ALIGN_OPTIONS;
     const orderOptions = ORDER_OPTIONS;
-    const slideTypes = SLIDE_TYPES;
+    // 页面类型候选项：业务经 slide-types 配置下发（编辑器 provide），未配置时新建按钮直接建缺省类型页
+    const slideTypes = inject<PptSlideTypeOption[]>(SLIDE_TYPES_KEY, []);
     const icons = TOOLBAR_ICONS;
     const alignIcons = ALIGN_ICONS;
     const orderIcons = ORDER_ICONS;
@@ -436,8 +437,9 @@ export default defineComponent({
     function switchTab(tab: 'home' | 'insert') {
       activeTab.value = tab;
     }
-    // 新建幻灯片：按所选类型在当前页后新建（缺省自定义页）
-    function onCreateSlide(type: PptSlideType) {
+    // 新建幻灯片：按所选类型在当前页后新建（缺省类型页不写 slideType 字段）；
+    // 未配置 slideTypes 时工具栏点击不传 type，直接新建缺省类型页
+    function onCreateSlide(type?: string) {
       closeSlideTypeMenu();
       if (!state.value) return;
       state.value.createSlide(type);

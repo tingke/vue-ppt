@@ -72,7 +72,7 @@ export function useToolbarPopups(getRoot: () => HTMLElement | null) {
     bizTablePickerVisible.value = false;
   }
 
-  // 新建幻灯片：点击弹出类型下拉（候选项取 core SLIDE_TYPES）
+  // 新建幻灯片：点击弹出类型下拉（候选项由业务 slide-types 配置下发）
   function toggleSlideTypeMenu(e: Event) {
     slideTypeMenuVisible.value = !slideTypeMenuVisible.value;
     if (slideTypeMenuVisible.value) slideTypePopupStyle.value = anchorPopupStyle(e, TOOLBAR_POPUP_WIDTH.slideType);

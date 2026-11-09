@@ -2,7 +2,7 @@
  * 工具栏预设（vue2 / vue3 双端共享）：
  * 字体、字号、行距、对齐、色板与排列命令候选项。
  */
-import type { PptSlideType, PptTextAlign } from './index';
+import type { PptTextAlign } from './index';
 
 /** 常用系统字体（仅保留系统字体） */
 export const FONT_FAMILIES: { label: string; value: string }[] = [
@@ -50,15 +50,3 @@ export const ORDER_OPTIONS: { label: string; command: 'up' | 'top' | 'down' | 'b
   { label: '下移一层', command: 'down' },
   { label: '置于底层', command: 'bottom' },
 ];
-
-/** 页面类型候选项（新建幻灯片下拉 / 缩略图右键切换共用，双端一致） */
-export const SLIDE_TYPES: { label: string; value: PptSlideType }[] = [
-  { label: '自定义页', value: 'custom' },
-  { label: '特殊点位页（循环）', value: 'pointSpecial' },
-  { label: '点位页（循环）', value: 'point' },
-];
-
-/** 页面类型显示名（缺省视为自定义页） */
-export function getSlideTypeLabel(type?: PptSlideType): string {
-  return SLIDE_TYPES.find((t) => t.value === (type || 'custom'))?.label || SLIDE_TYPES[0].label;
-}

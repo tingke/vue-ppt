@@ -2,6 +2,7 @@
   "name": "@tthappy/ppt-theme",
   "version": "0.1.1",
   "publishConfig": { "access": "public" },
+  "license": "MIT",
   "type": "module",
   "files": ["src"],
   "exports": { ".": "./src/index.css" }

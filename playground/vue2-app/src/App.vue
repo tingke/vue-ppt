@@ -1,11 +1,23 @@
 <template>
   <div class="app">
-    <h1>Vue PPT Kit</h1>
-    <p>Vue 2.6 + Element UI Playground — 顶部工具栏 + 左侧缩略图（含 3 种页面类型 / 业务文本）</p>
-    <PptStage class="stage" :document="doc" :biz-variables="bizVariables" :media-options="mediaOptions" />
+    <div class="topbar">
+      <div>
+        <h1>Vue PPT Kit</h1>
+        <p>Vue 2.6 + Element UI Playground — 顶部工具栏 + 左侧缩略图（含 3 种页面类型 / 业务文本）</p>
+      </div>
+      <a class="demo-switch" :href="vue3DemoUrl">Vue 3 示例 →</a>
+    </div>
+    <PptStage class="stage" :document="doc" :biz-variables="bizVariables" :media-options="mediaOptions" :slide-types="slideTypes" />
   </div>
 </template>
 <script>
+// 页面类型候选项（业务提供）：新建幻灯片下拉 / 缩略图角标与右键切换共用；
+// default 项为缺省类型（缺省类型页面不写 slideType 字段）
+const slideTypes = [
+  { label: '自定义页', value: 'custom', default: true },
+  { label: '特殊点位页（循环）', value: 'pointSpecial' },
+  { label: '点位页（循环）', value: 'point' },
+];
 // 业务变量树（参考需求图 2）：业务文本组件 fx 级联选择数据源
 const DATE_FORMATS = ['yyyy-mm-dd', 'yyyy-m-d', 'yyyy/m/d', 'yyyy/mm/dd', 'yyyy年m月d日', 'yy-mm-dd', 'm/d', 'mm.dd', 'm.d', 'mmdd']
   .map((label) => ({ label }));
@@ -34,7 +46,13 @@ export default {
   name: 'App',
   data() {
     return {
+      // 双示例互跳：Pages 上 Vue 2 在 vue2/ 子路径、Vue 3 在根路径；本地开发指向 Vue 3 的 dev server
+      vue3DemoUrl:
+        process.env.NODE_ENV === 'development'
+          ? 'http://localhost:5173/'
+          : process.env.BASE_URL.replace(/vue2\/$/, ''),
       mediaOptions,
+      slideTypes,
       bizVariables: [
         {
           label: '发布详情',
@@ -160,5 +178,8 @@ export default {
 <style>
 body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #303133; }
 .app { max-width: 1100px; margin: 40px auto; padding: 0 24px; }
+.topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.demo-switch { flex-shrink: 0; margin-top: 8px; color: #409eff; text-decoration: none; }
+.demo-switch:hover { text-decoration: underline; }
 .stage { margin-top: 24px; }
 </style>

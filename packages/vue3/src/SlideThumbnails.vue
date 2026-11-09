@@ -21,8 +21,8 @@
           <div class="vpk-thumb-label">{{ fillDigit(index + 1) }}</div>
           <div class="vpk-thumb" :style="thumbStyle">
             <SlideCanvas class="vpk-thumb-canvas" :slide="element" :width="doc.width" :height="doc.height" :scale="thumbScale" static />
-            <!-- 页面类型标签：卡片右下角 -->
-            <div class="vpk-thumb-type">{{ getSlideTypeLabel(element.slideType) }}</div>
+            <!-- 页面类型标签：卡片右下角（label 取业务 slide-types 配置，未配置/未知类型不显示） -->
+            <div v-if="slideTypeLabel(element.slideType)" class="vpk-thumb-type">{{ slideTypeLabel(element.slideType) }}</div>
           </div>
         </div>
       </template>
@@ -44,9 +44,8 @@
 import { computed, defineComponent } from '@vpk/vue-api';
 import type { PropType } from '@vpk/vue-api';
 import Draggable from 'vuedraggable';
-import { getSlideTypeLabel } from '@tthappy/ppt-core';
-import type { PptDocumentModel, PptSlideType } from '@tthappy/ppt-core';
-import { useSlideContextMenu } from '@vpk/shared/contextMenu';
+import type { PptDocumentModel, PptSlideModel, PptSlideTypeOption } from '@tthappy/ppt-core';
+import { useSlideContextMenu, defaultSlideTypeOf } from '@vpk/shared/contextMenu';
 import type { MenuItem } from '@vpk/shared/contextMenu';
 import SlideCanvas from '@vpk/shared/components/SlideCanvas.vue';
 import ContextMenu from '@vpk/shared/components/ContextMenu.vue';
@@ -57,6 +56,8 @@ export default defineComponent({
   props: {
     doc: { type: Object as PropType<PptDocumentModel>, required: true },
     slideIndex: { type: Object as PropType<{ value: number }>, required: true },
+    /** 页面类型候选项（业务经编辑器 slide-types 配置下发，用于角标显示与右键切换类型） */
+    slideTypes: { type: Array as unknown as () => PptSlideTypeOption[], default: () => [] },
   },
   emits: ['select', 'create', 'copy', 'remove', 'move', 'type-change'],
   setup(props, { emit }) {
@@ -83,20 +84,25 @@ export default defineComponent({
       emit('select', newIndex);
     }
 
+    // 页面类型显示名：查业务配置，未配置/未知类型返回空（角标隐藏）
+    function slideTypeLabel(type?: string): string {
+      return (props.slideTypes.find((t) => t.value === (type || defaultSlideTypeOf(props.slideTypes))) || { label: '' }).label;
+    }
+
     // 右键菜单（状态与菜单项推导单源）
     const { menu, menuItems, openMenu, closeMenu } = useSlideContextMenu(props.doc, {
       create: () => emit('create'),
       copy: (index) => emit('copy', index),
       remove: (index) => emit('remove', index),
-      typeChange: (index, type: PptSlideType) => emit('type-change', index, type),
-    });
+      typeChange: (index, type: string) => emit('type-change', index, type),
+    }, props.slideTypes);
 
     function onMenuSelect(item: MenuItem) {
       if (item.handler) item.handler(menu.targetIndex);
       closeMenu();
     }
 
-    return { thumbStyle, thumbScale, fillDigit, onDragEnd, getSlideTypeLabel, menu, menuItems, openMenu, closeMenu, onMenuSelect };
+    return { thumbStyle, thumbScale, fillDigit, onDragEnd, slideTypeLabel, menu, menuItems, openMenu, closeMenu, onMenuSelect };
   },
 });
 </script>

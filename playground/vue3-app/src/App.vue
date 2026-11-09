@@ -1,12 +1,28 @@
 <template>
   <main class="app">
-    <h1>Vue PPT Kit</h1>
-    <p>Vue 3 + Element Plus Playground — 顶部工具栏 + 左侧缩略图（含 3 种页面类型 / 业务文本）</p>
-    <PptEditor class="stage" :document="doc" :biz-variables="bizVariables" :media-options="mediaOptions" />
+    <div class="topbar">
+      <div>
+        <h1>Vue PPT Kit</h1>
+        <p>Vue 3 + Element Plus Playground — 顶部工具栏 + 左侧缩略图（含 3 种页面类型 / 业务文本）</p>
+      </div>
+      <a class="demo-switch" :href="vue2DemoUrl">Vue 2 示例 →</a>
+    </div>
+    <PptEditor class="stage" :document="doc" :biz-variables="bizVariables" :media-options="mediaOptions" :slide-types="slideTypes" />
   </main>
 </template>
 <script setup lang="ts">
-import type { PptBizVariableNode, PptDocumentModel } from '@tthappy/ppt-core';
+import type { PptBizVariableNode, PptDocumentModel, PptSlideTypeOption } from '@tthappy/ppt-core';
+
+// 双示例互跳：Pages 上 Vue 3 在根路径、Vue 2 在 vue2/ 子路径；本地开发指向 Vue 2 的 dev server
+const vue2DemoUrl = import.meta.env.DEV ? 'http://localhost:8080/' : `${import.meta.env.BASE_URL}vue2/`;
+
+// 页面类型候选项（业务提供）：新建幻灯片下拉 / 缩略图角标与右键切换共用；
+// default 项为缺省类型（缺省类型页面不写 slideType 字段）
+const slideTypes: PptSlideTypeOption[] = [
+  { label: '自定义页', value: 'custom', default: true },
+  { label: '特殊点位页（循环）', value: 'pointSpecial' },
+  { label: '点位页（循环）', value: 'point' },
+];
 
 // 业务变量树（参考需求图 2）：业务文本组件 fx 级联选择数据源
 const DATE_FORMATS: PptBizVariableNode[] = ['yyyy-mm-dd', 'yyyy-m-d', 'yyyy/m/d', 'yyyy/mm/dd', 'yyyy年m月d日', 'yy-mm-dd', 'm/d', 'mm.dd', 'm.d', 'mmdd']
@@ -155,5 +171,8 @@ const doc: PptDocumentModel = {
 <style>
 body { margin: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #303133; }
 .app { max-width: 1100px; margin: 40px auto; padding: 0 24px; }
+.topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.demo-switch { flex-shrink: 0; margin-top: 8px; color: #409eff; text-decoration: none; }
+.demo-switch:hover { text-decoration: underline; }
 .stage { margin-top: 24px; }
 </style>

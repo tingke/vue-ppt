@@ -6,8 +6,7 @@
  * 渲染与全局关闭监听在 ContextMenu.vue（手动挂 body，无 Teleport，2.x 兼容）。
  */
 import { computed, reactive } from '@vpk/vue-api';
-import { SLIDE_TYPES } from '@tthappy/ppt-core';
-import type { PptDocumentModel, PptSlideType } from '@tthappy/ppt-core';
+import type { PptDocumentModel, PptSlideTypeOption } from '@tthappy/ppt-core';
 
 /** 菜单项：divider 为分隔线；children 为二级菜单；handler 执行后由调用方关闭菜单 */
 export interface MenuItem {
@@ -26,10 +25,15 @@ export interface SlideMenuHandlers {
   create(): void;
   copy(index: number): void;
   remove(index: number): void;
-  typeChange(index: number, type: PptSlideType): void;
+  typeChange(index: number, type: string): void;
 }
 
-export function useSlideContextMenu(doc: PptDocumentModel, handlers: SlideMenuHandlers) {
+/** 缺省类型值：default 项优先，否则取第一项（与 PptSlideTypeOption 约定一致） */
+export function defaultSlideTypeOf(slideTypes: PptSlideTypeOption[]): string | undefined {
+  return (slideTypes.find((t) => t.default) || slideTypes[0])?.value;
+}
+
+export function useSlideContextMenu(doc: PptDocumentModel, handlers: SlideMenuHandlers, slideTypes: PptSlideTypeOption[] = []) {
   const menu = reactive({ visible: false, x: 0, y: 0, targetIndex: -1 });
 
   function openMenu(e: MouseEvent, type: 'item' | 'blank', index = -1) {
@@ -51,18 +55,21 @@ export function useSlideContextMenu(doc: PptDocumentModel, handlers: SlideMenuHa
     }
     const index = menu.targetIndex;
     const onlyOne = doc.slides.length <= 1;
-    // 二级菜单：仅列出当前类型之外的另外 2 种
+    // 二级菜单：列出当前类型之外的候选（当前页未写 slideType 视为缺省类型）。
+    // 候选不足 2 项（业务未配置或仅一种）时不输出「切换类型」
     const slide = doc.slides[index];
-    const typeChildren: MenuItem[] = SLIDE_TYPES
-      .filter((t) => t.value !== (slide && slide.slideType || 'custom'))
+    const currentType = (slide && slide.slideType) || defaultSlideTypeOf(slideTypes);
+    const typeChildren: MenuItem[] = slideTypes
+      .filter((t) => t.value !== currentType)
       .map((t) => ({ text: t.label, handler: (i: number) => handlers.typeChange(i, t.value) }));
     const items: MenuItem[] = [
       { text: '新建页面', subText: 'Enter', handler: () => handlers.create() },
       { text: '复制页面', subText: 'Ctrl + D', handler: (i) => handlers.copy(i) },
       { text: '删除页面', subText: 'Delete', disabled: onlyOne, handler: (i) => handlers.remove(i) },
-      { divider: true },
-      { text: '切换类型', children: typeChildren },
     ];
+    if (typeChildren.length >= 1 && slideTypes.length >= 2) {
+      items.push({ divider: true }, { text: '切换类型', children: typeChildren });
+    }
     // 一级与二级菜单项均闭包绑定目标页 index
     return items.map((item) => ({
       ...item,

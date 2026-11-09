@@ -4,10 +4,15 @@
 
 ![编辑器预览](docs/preview.png)
 
+**在线 Demo**（push 到 main 自动部署，两个示例可在页面右上角互跳）：
+
+- Vue 3 Playground：<https://tingke.github.io/vue-ppt/>
+- Vue 2 Playground：<https://tingke.github.io/vue-ppt/vue2/>
+
 ## 特性
 
 - **完整编辑器**：顶部工具栏 + 左侧幻灯片缩略图（拖拽排序）+ 画布编辑区
-- **丰富的元素类型**：文本（富文本）、业务文本（业务字段 tag 混排）、图片、形状（矩形/椭圆/直线）、表格、富表格、媒体组件（图片 + 级联选照片 + 关联业务文本）
+- **丰富的元素类型**：核心元素为文本（富文本）、图片、形状（矩形/椭圆/直线）、表格；另有三个可选业务扩展元素——业务文本（业务字段 tag 混排）、富表格、媒体组件（图片 + 级联选照片 + 关联业务文本），均依赖业务数据配置（`bizVariables` / `mediaOptions`），不配置即不使用
 - **画布交互**：
   - 元素拖动 / 8 向手柄缩放（文本类仅左右，角手柄 + Shift 锁定宽高比）
   - 对齐吸附线：目标边/中心与其他元素、画布边界自动对齐
@@ -81,10 +86,20 @@ Vue.use(PptKit);
 业务文本组件的 `fx` 级联变量树与媒体组件的照片级联树，经 props 下发（编辑器级配置，不进文档数据）：
 
 ```vue
-<PptEditor :document="doc" :biz-variables="bizVariables" :media-options="mediaOptions" />
+<PptEditor
+  :document="doc"
+  :biz-variables="bizVariables"
+  :media-options="mediaOptions"
+  :slide-types="slideTypes"
+/>
 ```
 
-节点结构见 `PptBizVariableNode`（`label` / `description` / `children`），完整示例见 `playground/vue3-app/src/App.vue`。
+节点结构见 `PptBizVariableNode`（`label` / `description` / `value` / `children`），完整示例见 `playground/vue3-app/src/App.vue`。
+
+页面类型由业务经 `slide-types` 提供（`PptSlideTypeOption[]`：`label` / `value` / `default?`），
+供新建幻灯片下拉、缩略图角标与右键「切换类型」共用；`default: true` 的项为缺省类型
+（缺省类型的页面不写 `slideType` 字段）。未配置时点击「新建幻灯片」直接建缺省类型页，
+并隐藏类型角标与右键「切换类型」。
 
 ## 文档模型
 
@@ -99,13 +114,13 @@ interface PptDocumentModel {
 interface PptSlideModel {
   id: string;
   elements: PptElementModel[];      // text | bizText | image | shape | table | bizTable | media
-  slideType?: 'custom' | 'pointSpecial' | 'point';  // 页面类型，缺省 custom
+  slideType?: string;               // 页面类型（业务自定义枚举值，见 PptSlideTypeOption / slide-types 配置）
 }
 ```
 
 传入的 `document` 会被编辑器深拷贝接管；编辑产物通过 `@save` 事件交回宿主应用，组件不内置持久化。
 
-编辑器基于自身 JSON 文档模型工作，不解析 PPTX 文件（`core` 中的 `parsePptx` 为占位接口）。
+编辑器基于自身 JSON 文档模型工作，**不解析 / 不导出 PPTX 文件**（`core` 中的 `parsePptx` 为占位接口）。
 
 ## 快捷键
 
@@ -135,3 +150,7 @@ pnpm --filter @tthappy/ppt-core test      # core 单元测试（vitest）
 - 组合式 API 经 `packages/vue2/src/compat.ts` 运行时自适应：Vue 2.7 用内置实现，Vue 2.6 用随包内置的 `@vue/composition-api`（自动注册，宿主零配置）。**Vue 2.7 下不可注册该插件**（其 setup 挂载机制与原生 setup 双重冲突，详见 `packages/vue2/README.md`）。
 - Vue SFC 使用 `vue-template-compiler@2.7.16`（编译器与 2.6 运行时兼容，已验证）；宿主项目的 `vue` 与 `vue-template-compiler` 需严格同版本。
 - Vue 2 包使用独立构建链（Vite lib），产物为扁平 ESM/CJS，避免 webpack 宿主二次打包冲突；两个 Playground 依赖树完全独立。
+
+## License
+
+[MIT](./LICENSE)

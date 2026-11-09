@@ -18,14 +18,23 @@ export interface PptDocumentModel {
   warnings: string[];
 }
 
-/** 页面类型：自定义页 / 特殊点位页（循环）/ 点位页（循环） */
-export type PptSlideType = 'custom' | 'pointSpecial' | 'point';
+/** 页面类型候选项（编辑器级配置，业务提供，不进文档数据）：
+ *  新建幻灯片下拉 / 缩略图右键「切换类型」/ 缩略图角标共用；
+ *  default: true 的项为缺省类型（缺省类型的页面不写 slideType 字段） */
+export interface PptSlideTypeOption {
+  /** 显示名（下拉条目 / 角标文字） */
+  label: string;
+  /** 类型值（业务自定义，写入 PptSlideModel.slideType） */
+  value: string;
+  /** 是否缺省类型，缺省取第一项 */
+  default?: boolean;
+}
 
 export interface PptSlideModel {
   id: string;
   elements: PptElementModel[];
-  /** 页面类型，缺省视为 custom（自定义页） */
-  slideType?: PptSlideType;
+  /** 页面类型：业务自定义枚举值（见 PptSlideTypeOption），缺省视为业务配置的缺省类型 */
+  slideType?: string;
 }
 
 export type PptElementModel =
@@ -74,8 +83,10 @@ export interface PptTextElement extends PptBaseElement {
 export interface PptBizVariableNode {
   /** 显示名（tag 标签文字 / 级联菜单条目文字） */
   label: string;
-  /** 说明文字（如图 1 的「新打开网页的对象」） */
+  /** 说明文字 */
   description?: string;
+  /** 业务标识，叶子节点选中时随节点透传，供业务侧序列化/映射使用 */
+  value?: string | number;
   /** 子节点，缺省为叶子 */
   children?: PptBizVariableNode[];
 }
@@ -128,6 +139,10 @@ export interface PptTableCell {
 
 export interface PptTableElement extends PptBaseElement {
   type: 'table';
+  /** 行数，缺省由 data 推导（允许与 data 不一致：空表占位 / 后端 rowNum 映射）；渲染以 data 为准 */
+  row?: number;
+  /** 列数，缺省由 data 推导（语义同 row） */
+  col?: number;
   /** 行列数据，data[row][col] */
   data: PptTableCell[][];
   /** 每列宽度占比（总和为 1），缺省时均分 */
