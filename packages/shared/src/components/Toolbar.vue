@@ -267,7 +267,7 @@
     </div>
 
     <!-- 背景图片图库弹窗：上传多张进列表，支持多选，确定后按选择顺序插入为底层图片层（可拖动/缩放） -->
-    <BgGalleryDialog :visible="bgDialogVisible" :doc="doc" @confirm="onBgConfirm" @close="closeBgDialog" />
+    <BgGalleryDialog :visible="bgDialogVisible" :doc="doc" :upload-image="uploadImage" @confirm="onBgConfirm" @close="closeBgDialog" />
 
     <input ref="imageInputRef" type="file" accept="image/*" class="vpk-file-input" @change="onImageFileChange" />
   </div>
@@ -315,6 +315,9 @@ export default defineComponent({
     doc: { type: Object as PropType<PptDocumentModel>, required: true },
     /** useSlides 返回值，供开始 tab 的编辑 / 排列等操作直接调用 */
     state: { type: Object as PropType<SlidesState>, default: undefined },
+    /** 图片上传钩子（透传给背景图库弹窗）：把 File 换成业务上传接口返回的外链 URL；
+     *  不传回退 base64 dataURL */
+    uploadImage: { type: Function as unknown as PropType<(file: File) => Promise<string>>, default: undefined },
   },
   emits: ['insert', 'save'],
   setup(props, { emit }) {

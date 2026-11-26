@@ -3,7 +3,7 @@
        vue2 端入口 re-export 为 PptStage，vue3 端为 PptEditor，命名逐步归一） -->
   <!-- mousedown 标记快捷键作用域：同页多实例时仅最近交互实例接管按键 -->
   <div class="vpk-editor" @mousedown="onEditorMouseDown">
-    <Toolbar :doc="state.doc" :state="state" @insert="onInsert" @save="$emit('save', state.doc)" />
+    <Toolbar :doc="state.doc" :state="state" :upload-image="uploadImage" @insert="onInsert" @save="$emit('save', state.doc)" />
     <div class="vpk-main">
       <SlideThumbnails
         :doc="state.doc"
@@ -135,6 +135,9 @@ export default defineComponent({
      *  未传或空数组时按缺省推导——基础条目恒显示，业务条目仅在 bizVariables / mediaOptions
      *  配置存在时显示（见 core resolveInsertItems） */
     insertItems: { type: Array as unknown as () => PptInsertItemId[], default: undefined },
+    /** 图片上传钩子（编辑器级配置，不进文档数据）：背景图库上传时把 File 换成业务上传接口
+     *  返回的外链 URL；不传则回退 base64 dataURL（仅适合本地演示，保存体积大） */
+    uploadImage: { type: Function as unknown as PropType<(file: File) => Promise<string>>, default: undefined },
   },
   emits: ['save'],
   setup(props, { emit }) {

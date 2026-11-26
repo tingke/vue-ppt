@@ -42,6 +42,9 @@ export default defineComponent({
   props: {
     visible: { type: Boolean, default: false },
     doc: { type: Object as PropType<PptDocumentModel>, required: true },
+    /** 图片上传钩子（业务注入）：File → 业务上传接口返回的外链 URL（背景图保存进
+     *  content.imageUrl，避免 base64 进库）；不传回退 base64 dataURL（本地演示） */
+    uploadImage: { type: Function as unknown as PropType<(file: File) => Promise<string>>, default: undefined },
   },
   emits: ['confirm', 'close'],
   setup(props, { emit }) {
@@ -63,16 +66,18 @@ export default defineComponent({
       else selectedBgs.value.push(img);
     }
 
-    // 上传本地图片（可多张）：追加进图库列表
+    // 上传本地图片（可多张）：追加进图库列表。
+    // 提供了 uploadImage 时先走业务上传拿外链 URL（失败跳过该文件，错误提示由业务处理），
+    // 否则回退 base64 dataURL
     async function onUpload(e: Event) {
       const input = e.target as HTMLInputElement;
       const files = Array.from(input.files || []);
       input.value = '';
       for (const file of files) {
         try {
-          bgImages.value.push(await readFileAsDataURL(file));
+          bgImages.value.push(props.uploadImage ? await props.uploadImage(file) : await readFileAsDataURL(file));
         } catch {
-          // 单个文件读取失败：跳过，不影响其余文件
+          // 单个文件读取/上传失败：跳过，不影响其余文件
         }
       }
     }

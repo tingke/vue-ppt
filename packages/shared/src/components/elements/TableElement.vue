@@ -95,13 +95,17 @@ export default defineComponent({
       color: props.element.color ?? '#606266',
     }));
 
+    // 行最小高度（文档单位）：td 的 height 语义即 min-height，内容多时自动撑开
+    const ROW_MIN_HEIGHT = 32;
+
     function cellStyle(row: number): Record<string, string | undefined> {
       const el = props.element;
       const isHeader = row === 0 && el.headerFill;
       return {
         fontSize: (el.fontSize ?? 14) * props.scale + 'px',
+        height: ROW_MIN_HEIGHT * props.scale + 'px',
         background: isHeader ? el.headerFill : undefined,
-        color: isHeader ? el.headerColor ?? '#fff' : undefined,
+        color: isHeader ? el.headerColor ?? el.color ?? '#606266' : undefined,
       };
     }
 
@@ -124,7 +128,7 @@ export default defineComponent({
         height: el.height,
         text: cell.text,
         fontSize: el.fontSize ?? 14,
-        color: isHeader ? el.headerColor ?? '#fff' : el.color ?? '#606266',
+        color: isHeader ? el.headerColor ?? el.color ?? '#606266' : el.color ?? '#606266',
         align: 'left' as const,
       };
     }

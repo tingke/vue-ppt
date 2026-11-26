@@ -124,8 +124,9 @@ export function createTableElement(doc: DocSize, row: number, col: number): PptT
     data,
     colWidths: new Array(col).fill(1 / col),
     outlineColor: '#dcdcdc',
-    headerFill: '#ecf5ff',
-    headerColor: '#409eff',
+    // 不带斑马纹/表头底色：headerFill 留空（业务可按需设置单色表头）
+    headerFill: '',
+    headerColor: '',
     fontSize: 14,
     color: '#606266',
   };

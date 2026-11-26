@@ -60,14 +60,15 @@ export default defineComponent({
   },
   emits: ['select', 'create', 'copy', 'remove', 'move', 'type-change'],
   setup(props, { emit }) {
-    // vuedraggable@2 需要 list/model 可变数组，用副本在拖拽结束后同步回父组件
+    // vuedraggable@2 需要 list/model 可变数组，用副本在拖拽结束后同步回父组件；
+    // 增/删/复制/改类型均为原地 splice/属性修改（引用不变），必须 deep 监听才能同步
     const localSlides = ref<PptSlideModel[]>([]);
     watch(
       () => props.doc.slides,
       (slides) => {
         localSlides.value = slides.slice();
       },
-      { immediate: true }
+      { immediate: true, deep: true }
     );
 
     const thumbStyle = computed<Record<string, string>>(() => {

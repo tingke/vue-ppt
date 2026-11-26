@@ -50,8 +50,8 @@ export function useSlideContextMenu(doc: PptDocumentModel, handlers: SlideMenuHa
 
   const menuItems = computed<MenuItem[]>(() => {
     if (menu.targetIndex < 0) {
-      // 空白区域菜单
-      return [{ text: '新建页面', subText: 'Enter', handler: () => handlers.create() }];
+      // 空白区域菜单（页面级操作暂无快捷键，不展示按键提示）
+      return [{ text: '新建页面', handler: () => handlers.create() }];
     }
     const index = menu.targetIndex;
     const onlyOne = doc.slides.length <= 1;
@@ -62,10 +62,11 @@ export function useSlideContextMenu(doc: PptDocumentModel, handlers: SlideMenuHa
     const typeChildren: MenuItem[] = slideTypes
       .filter((t) => t.value !== currentType)
       .map((t) => ({ text: t.label, handler: (i: number) => handlers.typeChange(i, t.value) }));
+    // 注意：Ctrl+D / Delete 是「选中元素」级快捷键（hotkeys.ts），页面级操作未绑定按键，不展示提示
     const items: MenuItem[] = [
-      { text: '新建页面', subText: 'Enter', handler: () => handlers.create() },
-      { text: '复制页面', subText: 'Ctrl + D', handler: (i) => handlers.copy(i) },
-      { text: '删除页面', subText: 'Delete', disabled: onlyOne, handler: (i) => handlers.remove(i) },
+      { text: '新建页面', handler: () => handlers.create() },
+      { text: '复制页面', handler: (i) => handlers.copy(i) },
+      { text: '删除页面', disabled: onlyOne, handler: (i) => handlers.remove(i) },
     ];
     if (typeChildren.length >= 1 && slideTypes.length >= 2) {
       items.push({ divider: true }, { text: '切换类型', children: typeChildren });
