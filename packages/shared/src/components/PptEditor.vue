@@ -102,9 +102,10 @@ import {
   createHotkeyHandler,
   markHotkeyScope,
   createMediaTextElement,
+  resolveInsertItems,
 } from '@tthappy/ppt-core';
-import type { PptBizVariableNode, PptDocumentModel, PptElementModel, PptMediaElement, PptSlideTypeOption } from '@tthappy/ppt-core';
-import { BIZ_VARIABLES_KEY, MEDIA_OPTIONS_KEY, SLIDE_TYPES_KEY } from '../emitter';
+import type { PptBizVariableNode, PptDocumentModel, PptElementModel, PptInsertItemId, PptMediaElement, PptSlideTypeOption } from '@tthappy/ppt-core';
+import { BIZ_VARIABLES_KEY, INSERT_ITEMS_KEY, MEDIA_OPTIONS_KEY, SLIDE_TYPES_KEY } from '../emitter';
 import { useSlides } from '../useSlides';
 import { useCanvasScale } from '../useCanvasScale';
 import type { MenuItem } from '../contextMenu';
@@ -130,6 +131,10 @@ export default defineComponent({
     /** 页面类型候选项（编辑器级配置，业务提供，不进文档数据），runtime type 同上须为 Array：
      *  新建幻灯片下拉 / 缩略图角标与右键切换类型共用；default 项为缺省类型（不写 slideType 字段） */
     slideTypes: { type: Array as unknown as () => PptSlideTypeOption[], default: undefined },
+    /** 插入 Tab 条目白名单（编辑器级配置，业务提供，不进文档数据），runtime type 同上须为 Array：
+     *  未传或空数组时按缺省推导——基础条目恒显示，业务条目仅在 bizVariables / mediaOptions
+     *  配置存在时显示（见 core resolveInsertItems） */
+    insertItems: { type: Array as unknown as () => PptInsertItemId[], default: undefined },
   },
   emits: ['save'],
   setup(props, { emit }) {
@@ -170,6 +175,20 @@ export default defineComponent({
     provide(BIZ_VARIABLES_KEY, bizVariablesHolder.list);
     provide(MEDIA_OPTIONS_KEY, mediaOptionsHolder.list);
     provide(SLIDE_TYPES_KEY, slideTypesHolder.list);
+
+    // 插入条目白名单下发（工具栏注入）。未显式配置时随 bizVariables / mediaOptions 推导缺省，
+    // 三者常为异步加载，故任一变化都重新解析并 splice 原地同步（引用不变，inject 方可跟踪）
+    const insertItemsHolder = reactive({ list: [] as PptInsertItemId[] });
+    const syncInsertItems = () => {
+      insertItemsHolder.list.splice(
+        0,
+        insertItemsHolder.list.length,
+        ...resolveInsertItems(props.insertItems, props.bizVariables, props.mediaOptions),
+      );
+    };
+    watch([() => props.insertItems, () => props.bizVariables, () => props.mediaOptions], syncInsertItems);
+    syncInsertItems();
+    provide(INSERT_ITEMS_KEY, insertItemsHolder.list);
 
     const initialDoc = props.document as PptDocumentModel | undefined;
     // 缺省页面类型随 slideTypes 配置下发（default 项优先，否则第一项）

@@ -51,6 +51,7 @@ function onSave(doc: PptDocumentModel) { /* 持久化 doc */ }
 | `document` | `PptDocumentModel` | 文档模型（必填），纯 JSON 结构，编辑后经 `@save` 事件回交宿主持久化 |
 | `biz-variables` | `PptBizVariableNode[]` | 业务文本组件（fx）可选择的业务变量树 |
 | `media-options` | 级联选项树 | 媒体组件的照片级联选项 |
+| `insert-items` | 插入条目白名单 | 可选。插入 Tab 显示的条目 id 数组（`slide` / `background` / `bizText` / `media` / `bizTable` / `text` / `image` / `table`）；未传或空数组时按缺省推导：基础条目恒显示，业务条目仅在对应 `biz-variables` / `media-options` 配置存在时显示 |
 
 ## 样式
 

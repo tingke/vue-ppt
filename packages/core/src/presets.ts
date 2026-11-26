@@ -1,8 +1,8 @@
 /**
  * 工具栏预设（vue2 / vue3 双端共享）：
- * 字体、字号、行距、对齐、色板与排列命令候选项。
+ * 字体、字号、行距、对齐、色板与排列命令候选项，以及插入条目的显隐解析。
  */
-import type { PptTextAlign } from './index';
+import type { PptBizVariableNode, PptTextAlign } from './index';
 
 /** 常用系统字体（仅保留系统字体） */
 export const FONT_FAMILIES: { label: string; value: string }[] = [
@@ -50,3 +50,30 @@ export const ORDER_OPTIONS: { label: string; command: 'up' | 'top' | 'down' | 'b
   { label: '下移一层', command: 'down' },
   { label: '置于底层', command: 'bottom' },
 ];
+
+/** 插入 Tab 条目 id 全集（顺序即工具栏分组顺序）：业务经 insert-items 白名单配置显隐 */
+export const INSERT_ITEM_IDS = ['slide', 'background', 'bizText', 'media', 'bizTable', 'text', 'image', 'table'] as const;
+
+/** 插入 Tab 条目 id（见 INSERT_ITEM_IDS） */
+export type PptInsertItemId = (typeof INSERT_ITEM_IDS)[number];
+
+/**
+ * 解析插入 Tab 的可见条目（白名单）：
+ * - 显式传入非空 insertItems 时原样采用，条目显隐由业务全权决定
+ * - 否则按缺省推导：基础条目恒显示；业务条目仅在对应配置存在时显示
+ *  （bizText / bizTable 依赖 bizVariables，media 依赖 mediaOptions），即「不配置即不使用」
+ */
+export function resolveInsertItems(
+  insertItems?: readonly PptInsertItemId[],
+  bizVariables?: readonly PptBizVariableNode[],
+  mediaOptions?: readonly PptBizVariableNode[],
+): PptInsertItemId[] {
+  if (insertItems && insertItems.length) return [...insertItems];
+  const bizEnabled = !!bizVariables?.length;
+  const mediaEnabled = !!mediaOptions?.length;
+  return INSERT_ITEM_IDS.filter((id) => {
+    if (id === 'bizText' || id === 'bizTable') return bizEnabled;
+    if (id === 'media') return mediaEnabled;
+    return true;
+  });
+}

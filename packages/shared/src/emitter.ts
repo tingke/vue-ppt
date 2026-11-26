@@ -22,3 +22,7 @@ export const MEDIA_OPTIONS_KEY = 'vpkMediaOptions';
 /** 页面类型候选项 inject key：编辑器宿主 provide（业务经 slide-types 配置下发），
  *  工具栏新建幻灯片下拉 / 缩略图角标与右键切换类型共用 */
 export const SLIDE_TYPES_KEY = 'vpkSlideTypes';
+
+/** 插入条目白名单 inject key：编辑器宿主 provide（业务经 insert-items 配置下发，未配置时按
+ *  bizVariables / mediaOptions 推导缺省），工具栏注入后按条目 id 门控显隐 */
+export const INSERT_ITEMS_KEY = 'vpkInsertItems';

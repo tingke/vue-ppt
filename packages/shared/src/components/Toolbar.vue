@@ -166,9 +166,11 @@
       </div>
 
       <!-- ==================== 插入：幻灯片 / 背景 / 组件（图标数据取 core TOOLBAR_ICONS） ==================== -->
-      <div v-else class="vpk-tool-groups">
-        <!-- 幻灯片：有类型配置时点击弹出类型下拉；未配置时点击直接新建缺省类型页 -->
-        <div class="vpk-tool-group">
+      <div v-else class="vpk-tool-groups vpk-tool-groups--insert">
+        <!-- 幻灯片：有类型配置时点击弹出类型下拉；未配置时点击直接新建缺省类型页。
+             各分组 / 按钮按 insert-items 白名单门控（编辑器按业务配置 provide）；
+             分组分隔线由 CSS 相邻选择器生成，分组隐藏时不会残留竖线 -->
+        <div v-if="showInsert('slide')" class="vpk-tool-group">
           <div class="vpk-group-items">
             <div class="vpk-tool-anchor">
               <button type="button" class="vpk-tool-btn" title="新建幻灯片"
@@ -188,10 +190,8 @@
           </div>
         </div>
 
-        <span class="vpk-group-divider" />
-
         <!-- 背景 -->
-        <div class="vpk-tool-group">
+        <div v-if="showInsert('background')" class="vpk-tool-group">
           <div class="vpk-group-items">
             <button type="button" class="vpk-tool-btn" title="设置当前页背景图片" @click="openBgDialog">
               <span class="vpk-icon" v-html="icons.image"></span>
@@ -200,22 +200,20 @@
           </div>
         </div>
 
-        <span class="vpk-group-divider" />
-
         <!-- 业务组件：媒体 / 业务文本 -->
-        <div class="vpk-tool-group">
+        <div v-if="showInsert('bizText') || showInsert('media') || showInsert('bizTable')" class="vpk-tool-group">
           <div class="vpk-group-items">
-            <button type="button" class="vpk-tool-btn" title="插入富文本（支持业务字段混排）" @click="insertBizTextElement">
+            <button v-if="showInsert('bizText')" type="button" class="vpk-tool-btn" title="插入富文本（支持业务字段混排）" @click="insertBizTextElement">
               <span class="vpk-icon" v-html="icons.text"></span>
               <span>文本</span>
             </button>
 
-            <button type="button" class="vpk-tool-btn" title="插入照片" @click="insertMediaElement">
+            <button v-if="showInsert('media')" type="button" class="vpk-tool-btn" title="插入照片" @click="insertMediaElement">
               <span class="vpk-icon" v-html="icons.image"></span>
               <span>照片</span>
             </button>
 
-            <div class="vpk-tool-anchor">
+            <div v-if="showInsert('bizTable')" class="vpk-tool-anchor">
               <button type="button" class="vpk-tool-btn" title="插入表格（单元格支持业务字段混排）" :class="{ active: bizTablePickerVisible }" @click="toggleBizTablePicker($event)">
                 <span class="vpk-icon" v-html="icons.table"></span>
                 <span>表格</span>
@@ -234,22 +232,20 @@
           </div>
         </div>
 
-        <span class="vpk-group-divider" />
-
-        <!-- 组件：文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
-        <div class="vpk-tool-group">
+        <!-- 基础组件：文本 / 图片 / 表格（表格沿用 10x10 选择器 + 自定义行列） -->
+        <div v-if="showInsert('text') || showInsert('image') || showInsert('table')" class="vpk-tool-group">
           <div class="vpk-group-items">
-            <button type="button" class="vpk-tool-btn" title="插入文本" @click="insertTextElement">
+            <button v-if="showInsert('text')" type="button" class="vpk-tool-btn" title="插入文本" @click="insertTextElement">
               <span class="vpk-icon" v-html="icons.text"></span>
               <span>文本</span>
             </button>
 
-            <button type="button" class="vpk-tool-btn" title="插入图片" @click="triggerImagePick">
+            <button v-if="showInsert('image')" type="button" class="vpk-tool-btn" title="插入图片" @click="triggerImagePick">
               <span class="vpk-icon" v-html="icons.image"></span>
               <span>图片</span>
             </button>
 
-            <div class="vpk-tool-anchor">
+            <div v-if="showInsert('table')" class="vpk-tool-anchor">
               <button type="button" class="vpk-tool-btn" title="插入表格" :class="{ active: tablePickerVisible }"
                 @click="toggleTablePicker($event)">
                 <span class="vpk-icon" v-html="icons.table"></span>
@@ -286,6 +282,7 @@ import {
   EDITOR_EMITTER,
   FONT_FAMILIES,
   FONT_SIZES,
+  INSERT_ITEM_IDS,
   LINE_HEIGHTS,
   MIN_SIZE,
   ORDER_ICONS,
@@ -301,8 +298,8 @@ import {
   readFileAsImage,
   stripRichTextStyle,
 } from '@tthappy/ppt-core';
-import type { EditorEmitter, PptDocumentModel, PptElementModel, PptImageElement, PptSlideTypeOption, PptTextAlign, PptTextElement, RichTextState } from '@tthappy/ppt-core';
-import { sharedEmitter, SLIDE_TYPES_KEY } from '../emitter';
+import type { EditorEmitter, PptDocumentModel, PptElementModel, PptImageElement, PptInsertItemId, PptSlideTypeOption, PptTextAlign, PptTextElement, RichTextState } from '@tthappy/ppt-core';
+import { INSERT_ITEMS_KEY, sharedEmitter, SLIDE_TYPES_KEY } from '../emitter';
 import { useToolbarPopups } from '../useToolbarPopups';
 import { useSlides } from '../useSlides';
 import ColorPopup from './toolbar/ColorPopup.vue';
@@ -410,6 +407,10 @@ export default defineComponent({
     const orderOptions = ORDER_OPTIONS;
     // 页面类型候选项：业务经 slide-types 配置下发（编辑器 provide），未配置时新建按钮直接建缺省类型页
     const slideTypes = inject<PptSlideTypeOption[]>(SLIDE_TYPES_KEY, []);
+    // 插入条目白名单：编辑器按 insert-items 配置（或 bizVariables / mediaOptions 推导缺省）provide；
+    // 脱离编辑器树单独使用 Toolbar 时缺省全部显示
+    const insertItems = inject<PptInsertItemId[]>(INSERT_ITEMS_KEY, [...INSERT_ITEM_IDS]);
+    const showInsert = (id: PptInsertItemId) => insertItems.indexOf(id) > -1;
     const icons = TOOLBAR_ICONS;
     const alignIcons = ALIGN_ICONS;
     const orderIcons = ORDER_ICONS;
@@ -617,6 +618,7 @@ export default defineComponent({
 
     return {
       rootRef,
+      showInsert,
       selectedEl,
       textEl,
       isTextSelected,
@@ -761,6 +763,14 @@ export default defineComponent({
   justify-content: center;
   gap: 2px;
   padding: 0 6px;
+}
+
+/* 插入 Tab 分组分隔线：由相邻分组自动生成（分组可经 insert-items 白名单隐藏，手写分隔线会残留）。
+   几何与 .vpk-group-divider 等价：1px 线、上下内缩 4px、左右各留 2px + 容器 gap */
+.vpk-tool-groups--insert .vpk-tool-group + .vpk-tool-group {
+  margin: 4px 0 4px 2px;
+  padding-left: 10px;
+  border-left: 1px solid var(--vpk-border, #ebeef5);
 }
 
 .vpk-group-items {
