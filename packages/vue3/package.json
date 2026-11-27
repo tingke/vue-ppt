@@ -1,6 +1,6 @@
 {
   "name": "@tthappy/ppt-vue3",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publishConfig": { "access": "public" },
   "license": "MIT",
   "type": "module",
